@@ -506,7 +506,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Unlock<
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
       <li><strong>Still black:</strong> close every other tab with your Signal address open, then reload the bookmarked address.</li>
-      <li><strong>If the Encoder setting keeps resetting</strong>, ask the owner to set JPEG as the server default. That's a one-line change described in the project's <a href="https://github.com/vlsalsa/signal-web-gate#make-jpeg-the-default-encoder">README: Make JPEG the default encoder</a>.</li>
+      <li><strong>If the Encoder setting keeps resetting</strong>, ask the owner to set JPEG as the server default. On the computer running Signal, they run:
+        <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && bash scripts/setup.sh jpeg</code></pre></div></div>
+        <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Jpeg</code></pre></div></div>
+        It restarts only Signal (your linked phone stays linked) and ends with <code>Signal now starts with JPEG</code>. Then reload the Signal page. Details: <a href="https://github.com/vlsalsa/signal-web-gate#make-jpeg-the-default-encoder">README: Make JPEG the default encoder</a>.</li>
       <li><strong>Your workplace blocks the site:</strong> follow your employer's rules. This guide doesn't get around work security policies.</li>
     </ul>
   </details>

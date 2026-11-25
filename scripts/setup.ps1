@@ -10,9 +10,10 @@
     powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
     powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -ResetPassword
     powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Unlock
+    powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Jpeg
 #>
 [CmdletBinding()]
-param([switch]$ResetPassword, [switch]$Unlock)
+param([switch]$ResetPassword, [switch]$Unlock, [switch]$Jpeg)
 
 # Native tools (docker) write progress to stderr; don't let that abort the script.
 $ErrorActionPreference = 'Continue'
@@ -77,10 +78,21 @@ function Set-EnvValue([string]$key, [string]$val) {
   if (-not $found) { $lines.Add("$key=$val") }
   [IO.File]::WriteAllText($path, (($lines -join "`n") + "`n"), $Utf8NoBom)
 }
-function Set-ComposeFile {
+function Add-ComposeFiles([string[]]$files) {
+  # Keep whatever is already listed (e.g. compose.jpeg.yml), add missing files,
+  # and keep docker-compose.yml first.
   $sep = [IO.Path]::PathSeparator   # ';' on Windows
-  Set-EnvValue 'COMPOSE_FILE' ("docker-compose.yml{0}compose.desktop.yml" -f $sep)
+  $cur = Get-EnvValue 'COMPOSE_FILE'
+  $list = New-Object System.Collections.Generic.List[string]
+  $list.Add('docker-compose.yml')
+  foreach ($f in (@($cur -split '[:;]') + $files)) {
+    $f = ($f -replace '\s', '')
+    if ($f -and -not $list.Contains($f)) { $list.Add($f) }
+  }
+  $out = $list -join $sep
+  if ($out -ne $cur) { Set-EnvValue 'COMPOSE_FILE' $out }
 }
+function Set-ComposeFile { Add-ComposeFiles @('compose.desktop.yml') }
 function Get-LocalIanaZone {
   $id = [TimeZoneInfo]::Local.Id
   if ($id -match '/') { return $id }
@@ -292,7 +304,7 @@ function Unlock-Gate {
   & docker compose stop signal-gate
   # A throwaway container with no network edits the lockout file as the gate's user (3006).
   # No double quotes inside: Windows PowerShell 5.1 doesn't escape them for native commands.
-  $sh = 'set -e; if [ -s /state/lockout.json ]; then cp /state/lockout.json /state/lockout.json.bak-$1; echo Backed up the old lock list as lockout.json.bak-$1; fi; printf {} > /state/lockout.json.tmp; mv /state/lockout.json.tmp /state/lockout.json'
+  $sh = 'set -e; umask 077; if [ -s /state/lockout.json ]; then cp /state/lockout.json /state/lockout.json.bak-$1; echo Backed up the old lock list as lockout.json.bak-$1; fi; printf {} > /state/lockout.json.tmp; mv /state/lockout.json.tmp /state/lockout.json; ls -1t /state/lockout.json.bak-* 2>/dev/null | tail -n +6 | while read -r f; do rm -f $f; done'
   & docker run --rm --network none --user 3006:3006 --entrypoint /bin/sh -v "${vol}:/state" $img -c $sh unlock $stamp
   $rc = $LASTEXITCODE
   & docker compose start signal-gate
@@ -300,8 +312,27 @@ function Unlock-Gate {
   Ok 'Unlocked. You can sign in again (your password is unchanged).'
 }
 
+function Enable-Jpeg {
+  Step 'Making JPEG the default video encoder'
+  Set-ComposeFile
+  Add-ComposeFiles @('compose.jpeg.yml')
+  Ok ("COMPOSE_FILE=" + (Get-EnvValue 'COMPOSE_FILE'))
+  # Recreates only signal-web; the linked Signal profile is kept.
+  & docker compose up -d --no-deps signal-web
+  if ($LASTEXITCODE -ne 0) { Stop-Setup "Docker couldn't restart Signal." }
+  $id = (& docker compose ps -q signal-web)
+  $envs = (& docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' $id 2>$null)
+  if ($envs -match '^SELKIES_ENCODER=jpeg') { Ok 'Signal now starts with JPEG. Reload the Signal page in your browser.' }
+  else { Warn "Signal restarted, but the JPEG setting isn't visible in the container. Check compose.jpeg.yml." }
+}
+
 Write-Host 'Signal web gate setup  (press Ctrl+C at any time to stop; it is safe to run again)' -ForegroundColor Cyan
 Test-Docker
+if ($Jpeg) {
+  if (-not (Test-Path .env)) { Stop-Setup 'Run the full setup first.' }
+  Enable-Jpeg
+  exit 0
+}
 if ($Unlock) {
   if (-not (Test-Path .env)) { Stop-Setup 'Run the full setup first.' }
   Unlock-Gate

@@ -186,18 +186,17 @@ To make JPEG the server-side default, add [`compose.jpeg.yml`](compose.jpeg.yml)
 SELKIES_ENCODER: "jpeg,h264enc,h265enc,vp8enc,vp9enc,av1enc"
 ```
 
-Append it to `COMPOSE_FILE` in `.env`, using `:` on macOS/Linux and `;` on Windows:
+Turn it on with the helper, from the repo folder:
 
 ```bash
-# macOS / Linux (Docker Desktop)
-COMPOSE_FILE=docker-compose.yml:compose.desktop.yml:compose.jpeg.yml
-# Windows
-COMPOSE_FILE=docker-compose.yml;compose.desktop.yml;compose.jpeg.yml
-# Native Linux without the desktop override
-COMPOSE_FILE=docker-compose.yml:compose.jpeg.yml
+bash scripts/setup.sh jpeg                                            # macOS / Linux
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Jpeg     # Windows
 ```
 
-Then run `docker compose up -d`. This recreates `signal-web`, but your linked profile is kept.
+It adds `compose.jpeg.yml` to `COMPOSE_FILE` in `.env` (keeping any files already listed;
+running it twice is harmless) and recreates only `signal-web`, so your linked profile is kept.
+Re-running the full setup keeps it too. To turn it off, remove `compose.jpeg.yml` from
+`COMPOSE_FILE` in `.env` and run `docker compose up -d`.
 A browser that already saved its own encoder choice may keep it. See LinuxServer's
 [Selkies configuration reference](https://docs.linuxserver.io/selkies/user-guide/configuration/)
 for the full syntax.

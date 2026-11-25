@@ -4,6 +4,7 @@
 #   bash scripts/setup.sh            first-time setup (safe to run again)
 #   bash scripts/setup.sh password   change the gate password (signs out all browsers)
 #   bash scripts/setup.sh unlock     clear a password-page lockout (too many wrong tries)
+#   bash scripts/setup.sh jpeg       make JPEG the default video encoder (for Menlo-style browsers)
 #
 # It asks a few questions, writes .env, creates ./secrets, builds the gate image,
 # stores your password only as an argon2id hash, and starts the stack.
@@ -139,10 +140,21 @@ configure_env() {
   ensure_compose_file
   ok "Saved .env"
 }
+add_compose_files() { # add_compose_files FILE... : keep what's listed, add any missing
+  local cur f out=docker-compose.yml
+  local -a have want
+  cur=$(get_env COMPOSE_FILE)
+  IFS=':;' read -r -a have <<< "$cur"
+  want=("${have[@]+"${have[@]}"}" "$@")
+  for f in "${want[@]+"${want[@]}"}"; do
+    f=${f//[[:space:]]/}
+    [[ -n "$f" && "$f" != docker-compose.yml ]] || continue
+    case ":$out:" in *":$f:"*) ;; *) out="$out:$f" ;; esac
+  done
+  [[ "$out" == "$cur" ]] || set_env COMPOSE_FILE "$out"
+}
 ensure_compose_file() {
-  if [[ "$desktop" == 1 ]]; then
-    set_env COMPOSE_FILE "docker-compose.yml:compose.desktop.yml"
-  fi
+  if [[ "$desktop" == 1 ]]; then add_compose_files compose.desktop.yml; fi
 }
 
 # ------------------------------------------------------------------ secrets
@@ -271,12 +283,27 @@ unlock_gate() {
   # A throwaway container with no network edits the lockout file as the gate's user (3006).
   docker run --rm --network none --user 3006:3006 --entrypoint /bin/sh \
     -v "$src:/state" "$img" -c '
-      set -e
+      set -e; umask 077
       if [ -s /state/lockout.json ]; then cp /state/lockout.json "/state/lockout.json.bak-$1"; echo "  Backed up the old lock list as lockout.json.bak-$1"; fi
       printf "{}" > /state/lockout.json.tmp && mv /state/lockout.json.tmp /state/lockout.json
+      ls -1t /state/lockout.json.bak-* 2>/dev/null | tail -n +6 | while read -r f; do rm -f "$f"; done
     ' unlock "$stamp" || { compose start signal-gate; die "Couldn't clear the lock list."; }
   compose start signal-gate
   ok "Unlocked. You can sign in again (your password is unchanged)."
+}
+
+enable_jpeg() {
+  step "Making JPEG the default video encoder"
+  ensure_compose_file
+  add_compose_files compose.jpeg.yml
+  ok "COMPOSE_FILE=$(get_env COMPOSE_FILE)"
+  # Recreates only signal-web; the linked Signal profile is kept.
+  compose up -d --no-deps signal-web || die "Docker couldn't restart Signal."
+  if docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$(compose ps -q signal-web)" | grep -q '^SELKIES_ENCODER=jpeg'; then
+    ok "Signal now starts with JPEG. Reload the Signal page in your browser."
+  else
+    warn "Signal restarted, but the JPEG setting isn't visible in the container. Check compose.jpeg.yml."
+  fi
 }
 
 desktop=0
@@ -299,7 +326,13 @@ main() {
     unlock_gate
     exit 0
   fi
-  [[ -z "${1:-}" ]] || die "Unknown option '$1'. Use no option, 'password' or 'unlock'."
+  if [[ "${1:-}" == jpeg ]]; then
+    check_docker
+    [[ -f .env ]] || die "Run the full setup first: bash scripts/setup.sh"
+    enable_jpeg
+    exit 0
+  fi
+  [[ -z "${1:-}" ]] || die "Unknown option '$1'. Use no option, 'password', 'unlock' or 'jpeg'."
   say "${bold}Signal web gate setup${reset}  (press Ctrl+C at any time to stop; it's safe to rerun)"
   check_docker
   configure_env
