@@ -3,6 +3,11 @@
 Run [Signal Desktop](https://signal.org/download/) in a browser, privately, behind
 Cloudflare Access **and** a second, self-hosted password page.
 
+> **New to this? Start with the [step-by-step setup guide](https://vlsalsa.github.io/signal-web-gate/)**
+> (also in this repo as [`docs/index.html`](docs/index.html), which you can open from a ZIP download).
+> It assumes a fresh Mac or Windows PC and no coding experience, and uses the setup helpers
+> below.
+
 It is a small Docker Compose stack:
 
 | Service | Image | Role |
@@ -45,8 +50,10 @@ Each request goes through these steps:
 
 ## Requirements
 
-- Docker Engine with the Compose v2 plugin, on x86-64 or arm64. The pinned digests are
-  multi-arch indexes; check that your platform is included.
+- Docker Engine with the Compose v2 plugin, or Docker Desktop on macOS or Windows.
+  The `signal-web` image is published for **x86-64 only** (`platform: linux/amd64`); on
+  Apple-silicon Macs Docker Desktop runs it under Rosetta/QEMU emulation. The gate and
+  `cloudflared` are pinned to multi-arch indexes (amd64 and arm64).
 - A domain on Cloudflare, and a Cloudflare Zero Trust organization (the free plan works).
 - `openssl` and `bash` for the helper scripts.
 
@@ -54,25 +61,58 @@ Each request goes through these steps:
 
 The dashboard moves things around; the names below are current as of late 2026.
 
-1. **Create a tunnel.** In Zero Trust go to **Networks → Tunnels → Create a tunnel →
-   Cloudflared**. Name it, pick Docker, copy only the **token**, and save it as
-   `secrets/tunnel_token`. Don't run the suggested `docker run` command.
-2. **Add a public hostname** to the tunnel, e.g. `signal.example.com`, with service
-   `HTTP` → `signal-gate:8080`.
-3. **Create an Access application.** Go to **Access → Applications → Add → Self-hosted**
-   for the same hostname, then:
-   - **Identity:** enable **One-time PIN**, plus any IdP you trust.
+1. **Turn on One-time PIN.** In Zero Trust go to **Integrations → Identity providers →
+   Add new → One-time PIN** (plus any IdP you trust).
+2. **Create an Access application first,** so the hostname is never public. Go to
+   **Zero Trust → Access controls → Applications → Create new application → Self-hosted
+   and private**, add the public hostname, e.g. `signal.example.com`, then:
    - **Policy:** action *Allow*, include *Emails* → only the address(es) you will allow.
+   - **Login methods:** One-time PIN.
    - Set a session duration you're comfortable with.
-4. **Copy the AUD tag** from the application's overview into `GATE_AUD`.
-5. **Find your team domain** under **Settings → Custom Pages** (or in the Access login
-   URL), e.g. `https://YOUR_TEAM.cloudflareaccess.com`. That's `GATE_TEAM`. It must match
-   the token's `iss` exactly.
+3. **Copy the Application Audience (AUD) tag** (under the application's additional settings)
+   into `GATE_AUD`.
+4. **Find your team domain** under Zero Trust **Settings** (team name and domain), or in the
+   Access login URL, e.g. `https://YOUR_TEAM.cloudflareaccess.com`. That's `GATE_TEAM`. It
+   must match the token's `iss` exactly.
+5. **Create a tunnel.** Go to **Networking → Tunnels → Create a tunnel → Cloudflared**.
+   Name it, pick Docker, and copy only the **token** (the guided helper accepts the whole
+   command). Don't run the suggested `docker run` command.
+6. **Add a published application route** to the tunnel for the same hostname, with
+   service `http://signal-gate:8080`.
 
 Put the email addresses from the Access policy in `GATE_ALLOWED_EMAIL`. The gate enforces
 them again, so a broadened Access policy alone does not let anyone in.
 
-## Quick start
+## Guided setup on a Mac or Windows PC (Docker Desktop)
+
+After the [Cloudflare setup](#cloudflare-setup) above, run the helper from the repo folder:
+
+| Platform | Run |
+|---|---|
+| macOS (or Linux) | `bash scripts/setup.sh` (or double-click `setup.command`) |
+| Windows | double-click `setup.bat`, or `powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1` |
+
+It checks Docker, asks for your hostname, team name, AUD tag and allowed emails, writes
+`.env`, creates everything in `./secrets` (the tunnel token is read without echo and can be
+pasted as the whole install command Cloudflare shows), builds the gate, hashes your password
+with argon2id, starts the stack and waits for the gate's health check. It is safe to re-run.
+`bash scripts/setup.sh password` / `setup.ps1 -ResetPassword` changes the password and
+rotates the session key, which signs out every browser.
+
+On Docker Desktop the helper sets `COMPOSE_FILE` in `.env` to add
+[`compose.desktop.yml`](compose.desktop.yml). Docker Desktop runs containers in a VM, where
+host `chown` has no effect, so that override keeps the Signal profile and gate state in
+named volumes (the gate image pre-creates `/gate/state` as uid 3006). The secret files stay
+in `./secrets`, a `0700` folder in your home directory, and are readable inside the VM.
+Plain `docker compose ...` commands keep working because Compose reads `COMPOSE_FILE` from
+`.env`. Note that `docker compose down -v` deletes those volumes and so the linked Signal profile.
+Set `SIGNAL_SETUP_MODE=desktop` or `native` to override the helper's guess (for example on
+Colima or Rancher Desktop).
+
+## Quick start (Linux host, by hand)
+
+`bash scripts/setup.sh` also works on a native Linux Docker host; it does the `chown` steps
+below with `sudo`. To do it by hand:
 
 ```bash
 git clone https://github.com/vlsalsa/signal-web-gate.git

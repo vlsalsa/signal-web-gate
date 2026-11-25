@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up Signal in your browser: a step-by-step guide</title>
+<meta name="description" content="A beginner-friendly walkthrough for running Signal Desktop in a browser on your own Mac or Windows PC, protected by Cloudflare Access and a password.">
+<style>
+:root{
+  --ink:#1a1613; --ink-soft:#4a433c; --paper:#f4efe6; --card:#fffaf3; --line:#e3d8c8;
+  --accent:#9c3b16; --accent-dark:#7a2c10; --moss:#215746; --moss-soft:#e4f0ea;
+  --warn:#7a4b00; --warn-soft:#fbefd5; --code:#2a2420; --code-ink:#f6efe6;
+  --on-accent:#fffaf3; --radius:16px; --max:52rem; --shadow:0 8px 24px rgba(26,22,19,.07);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --ink:#f3ece3; --ink-soft:#cfc5b9; --paper:#161311; --card:#221e1a; --line:#3a332c;
+    --accent:#f09a6e; --accent-dark:#ffb895; --moss:#8fd0b4; --moss-soft:#1c2e27;
+    --warn:#f2c46b; --warn-soft:#2e2615; --code:#0f0d0b; --code-ink:#f3ece3; --shadow:none; --on-accent:#1a1613; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:7rem}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper); color:var(--ink); line-height:1.6; font-size:1.0625rem}
+a{color:var(--accent); text-underline-offset:3px}
+a:hover{color:var(--accent-dark)}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-radius:6px}
+.skip{position:absolute; left:-999px; top:0; background:var(--card); padding:.6rem 1rem; z-index:99}
+.skip:focus{left:1rem; top:1rem}
+.wrap{width:min(var(--max), calc(100% - 2rem)); margin:0 auto}
+header.site{position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--line)}
+.bar{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1rem; padding:.65rem 0}
+.brand{font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:.6rem}
+.mark{width:2.1rem; height:2.1rem; border-radius:10px; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; font-size:.85rem}
+.ostoggle{display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:3px; background:var(--card)}
+.ostoggle button{font:inherit; font-weight:700; font-size:.95rem; border:0; background:none; color:var(--ink); padding:.4rem .95rem; border-radius:999px; cursor:pointer; min-height:2.5rem}
+.ostoggle button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent)}
+.progress{display:flex; align-items:center; gap:.6rem; font-size:.9rem; color:var(--ink-soft); width:100%}
+.progress .track{flex:1; height:.5rem; background:var(--line); border-radius:999px; overflow:hidden}
+.progress .fill{height:100%; width:0; background:var(--moss); transition:width .3s}
+.hero{padding:2rem 0 .5rem}
+.kicker{color:var(--moss); font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; margin:0 0 .3rem}
+h1,h2,h3{line-height:1.2; letter-spacing:-.01em; font-family:Georgia,"Times New Roman",serif}
+h1{font-size:clamp(1.9rem,6vw,2.8rem); margin:.2rem 0 .8rem}
+h2{font-size:clamp(1.4rem,4.5vw,1.9rem); margin:0 0 .6rem}
+h3{font-size:1.15rem; margin:1.4rem 0 .4rem}
+.lede{font-size:1.15rem; color:var(--ink-soft)}
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:1.2rem 1.3rem; margin:1.2rem 0; box-shadow:var(--shadow)}
+.step.done{border-color:var(--moss)}
+.step header{display:flex; justify-content:space-between; gap:1rem; align-items:flex-start}
+.badge{display:none; font-size:.8rem; font-weight:800; color:var(--moss); background:var(--moss-soft); border-radius:999px; padding:.2rem .65rem; white-space:nowrap}
+.step.done .badge{display:inline-block}
+ol.do, ul.plain{padding-left:1.4rem} ol.do li, ul.plain li{margin:.35rem 0}
+.why{color:var(--ink-soft); font-style:italic}
+.check{background:var(--moss-soft); border-left:5px solid var(--moss); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
+.check strong:first-child, .note strong:first-child, .warn strong:first-child{display:block}
+.note{background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
+.warn{background:var(--warn-soft); border-left:5px solid var(--warn); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
+.shot{border:2px dashed var(--line); border-radius:12px; padding:.75rem 1rem; color:var(--ink-soft); font-size:.95rem; margin:1rem 0}
+.shot::before{content:"What the screen looks like: "; font-weight:700; color:var(--ink)}
+.cmd{position:relative; margin:.7rem 0}
+.cmd pre{background:var(--code); color:var(--code-ink); border-radius:10px; padding:.85rem 1rem; padding-right:5.5rem; overflow-x:auto; margin:0; font-size:.92rem; line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:not(pre)>code{background:var(--line); padding:.05rem .35rem; border-radius:5px; font-size:.92em; overflow-wrap:anywhere}
+.copy{position:absolute; top:.45rem; right:.45rem; font:inherit; font-size:.85rem; font-weight:700; border:0; border-radius:8px; padding:.35rem .7rem; background:var(--accent); color:var(--on-accent); cursor:pointer; min-height:2.2rem}
+.copy.copied{background:var(--moss)}
+details{border:1px solid var(--line); border-radius:10px; padding:.2rem .9rem; margin:.8rem 0; background:var(--paper)}
+details[open]{padding-bottom:.6rem}
+summary{cursor:pointer; font-weight:700; padding:.5rem 0; min-height:2.2rem}
+label.done-box{display:flex; gap:.6rem; align-items:center; font-weight:700; margin-top:1rem; padding:.7rem .9rem; border:1px solid var(--line); border-radius:10px; cursor:pointer; background:var(--paper)}
+label.done-box input{width:1.35rem; height:1.35rem; accent-color:var(--moss)}
+.os-label{display:inline-block; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin-top:.5rem}
+.js .os-label{display:none}
+.js.os-mac [data-os="win"], .js.os-win [data-os="mac"]{display:none}
+nav.toc ol{columns:2 15rem; padding-left:1.4rem} nav.toc li{margin:.2rem 0; break-inside:avoid}
+nav.toc a.done::after{content:" ✓"; color:var(--moss); font-weight:800}
+.field{display:flex; flex-wrap:wrap; gap:.5rem; align-items:center}
+.field input{font:inherit; padding:.5rem .7rem; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); min-width:16rem; flex:1}
+.btn{font:inherit; font-weight:700; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:.45rem 1rem; cursor:pointer; min-height:2.5rem}
+table{border-collapse:collapse; width:100%; font-size:.95rem} th,td{border-bottom:1px solid var(--line); text-align:left; padding:.45rem .4rem; vertical-align:top}
+.kbd{border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:0 .35rem; font-size:.9em; background:var(--card); white-space:nowrap}
+footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+@media (max-width:640px){ header.site{position:static} html{scroll-padding-top:.5rem} .cmd pre{padding:2.7rem 1rem .85rem} }
+@media print{ header.site{position:static} .copy,.ostoggle,label.done-box{display:none} details{display:block} }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the guide</a>
+<header class="site">
+  <div class="wrap bar">
+    <a class="brand" href="#top"><span class="mark" aria-hidden="true">SW</span><span>Signal Web Gate setup guide</span></a>
+    <div class="ostoggle" role="group" aria-label="Show instructions for">
+      <button type="button" data-set-os="mac" aria-pressed="false">Mac</button>
+      <button type="button" data-set-os="win" aria-pressed="false">Windows</button>
+    </div>
+    <div class="progress" aria-live="polite">
+      <span id="progress-text">0 of 11 steps done</span>
+      <span class="track" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0"><span class="fill" id="progress-fill"></span></span>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+<section class="hero" id="top">
+  <p class="kicker">Beginner guide · Mac or Windows</p>
+  <h1>Signal in your browser, hosted on your own computer</h1>
+  <p class="lede">This guide walks you through every click. When you finish, you can open Signal from any web browser, for example on a work laptop, at an address like <code class="v-host">signal.example.com</code>. Only you can get in.</p>
+  <p>Pick your computer type with the <strong>Mac / Windows</strong> buttons at the top. Tick each step when it's done. Your ticks are saved in this browser only, so you can stop and come back later.</p>
+</section>
+
+<section class="card" aria-labelledby="before">
+  <h2 id="before">Before you start</h2>
+  <ul class="plain">
+    <li><strong>Time:</strong> about 1 to 2 hours the first time. Most of it is waiting for downloads.</li>
+    <li><strong>A computer that stays on:</strong> a Mac or a Windows 10/11 PC with at least 8 GB of memory and 10 GB of free space. Signal only works while this computer is on and awake.</li>
+    <li><strong>Your phone with Signal</strong> already set up. You'll link it at the end, like linking Signal Desktop.</li>
+    <li><strong>An email address</strong> you can check. You'll get a 6-digit sign-in code there each time you sign in.</li>
+    <li><strong>A web address (domain) on Cloudflare.</strong> If you don't have one, step 3 shows how to buy one (about $10 a year). Everything else is free.</li>
+    <li><strong>Permission to install apps</strong> on the computer. You'll need your computer password.</li>
+  </ul>
+  <div class="warn"><strong>Good to know</strong>Your Signal messages will be stored on this computer. Anyone who can sign in to this computer, or who has its backups, could read them. Use a computer only you use, with a password and disk encryption (FileVault on Mac, BitLocker or Device Encryption on Windows).</div>
+  <details>
+    <summary>How does this work? (optional reading)</summary>
+    <p>Three small programs run inside <strong>Docker</strong>, an app that runs software in sealed boxes called containers:</p>
+    <ol class="do">
+      <li><strong>Signal</strong>, the normal Signal Desktop app, shown as a web page.</li>
+      <li><strong>The gate</strong>, a password page that only lets you through.</li>
+      <li><strong>The tunnel</strong>, made by Cloudflare. It connects out to Cloudflare, so you don't open anything on your home router.</li>
+    </ol>
+    <p>When you visit your address, Cloudflare first emails you a code (this is <strong>Cloudflare Access</strong>). Then the gate asks for your password. Only then do you see Signal.</p>
+  </details>
+  <div class="field" style="margin-top:1rem">
+    <label for="host-input"><strong>Optional:</strong> your Signal address, to fill it in throughout this page</label>
+    <input id="host-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="signal.example.com">
+  </div>
+  <p class="note" style="margin-top:.6rem">This stays in this browser. Don't type passwords or tokens into this page.</p>
+</section>
+
+<nav class="toc card" aria-labelledby="toc-h">
+  <h2 id="toc-h">The steps</h2>
+  <ol>
+    <li><a href="#s1">Install Docker Desktop</a></li>
+    <li><a href="#s2">Download this project</a></li>
+    <li><a href="#s3">Get a domain on Cloudflare</a></li>
+    <li><a href="#s4">Turn on Cloudflare Zero Trust</a></li>
+    <li><a href="#s5">Lock the address with Cloudflare Access</a></li>
+    <li><a href="#s6">Create the Cloudflare Tunnel</a></li>
+    <li><a href="#s7">Run the setup helper</a></li>
+    <li><a href="#s8">Open your Signal address</a></li>
+    <li><a href="#s9">Link your phone</a></li>
+    <li><a href="#s10">Keep it running</a></li>
+    <li><a href="#s11">Work laptops and secure browsers</a></li>
+  </ol>
+  <p>After that: <a href="#daily">everyday use</a>, <a href="#password">change the password</a>, <a href="#update">updates</a>, <a href="#remove">stop or uninstall</a>, <a href="#security">security</a>, <a href="#glossary">glossary</a>.</p>
+  <button type="button" class="btn" id="reset-progress">Clear my ticks</button>
+</nav>
+
+<!-- ============================================================ STEP 1 -->
+<section class="card step" id="s1" aria-labelledby="s1-h">
+  <header><div><p class="kicker">Step 1 of 11</p><h2 id="s1-h">Install Docker Desktop</h2></div><span class="badge">Done</span></header>
+  <p class="why">Docker Desktop is the free app that runs the three programs. It's free for personal use and small businesses.</p>
+
+  <div data-os="mac">
+    <span class="os-label">On a Mac</span>
+    <ol class="do">
+      <li>Find out which chip your Mac has: click the Apple menu (the apple logo at the top left), then <strong>About This Mac</strong>. Look for <strong>Chip</strong> (Apple M1, M2, M3…) or <strong>Processor</strong> (Intel).</li>
+      <li>Go to <a href="https://www.docker.com/products/docker-desktop/">docker.com/products/docker-desktop</a> and choose <strong>Download for Mac – Apple Silicon</strong> or <strong>– Intel Chip</strong> to match.</li>
+      <li>Open the downloaded <code>Docker.dmg</code> and drag the Docker whale into the <strong>Applications</strong> folder.</li>
+      <li>Open <strong>Docker</strong> from Applications. Accept the terms. Choose <strong>Use recommended settings</strong> and type your Mac password if asked.</li>
+      <li>Signing in to Docker is optional. You can choose <strong>Skip</strong> or <strong>Continue without signing in</strong>.</li>
+      <li>Apple-chip Macs only: open Docker's <strong>Settings</strong> (gear icon) → <strong>General</strong>, and make sure <strong>Use Rosetta for x86_64/amd64 emulation on Apple Silicon</strong> is turned on. Click <strong>Apply</strong> if you changed it.</li>
+    </ol>
+  </div>
+  <div data-os="win">
+    <span class="os-label">On Windows</span>
+    <ol class="do">
+      <li>Go to <a href="https://www.docker.com/products/docker-desktop/">docker.com/products/docker-desktop</a> and choose <strong>Download for Windows – AMD64</strong>. (ARM-based Windows PCs aren't supported by this guide.)</li>
+      <li>Run <code>Docker Desktop Installer.exe</code>. Leave <strong>Use WSL 2 instead of Hyper-V</strong> ticked, then click <strong>OK</strong>.</li>
+      <li>When it finishes, click <strong>Close and restart</strong> (or restart the PC yourself).</li>
+      <li>After the restart, Docker Desktop opens. Accept the terms. Signing in to Docker is optional; you can skip it.</li>
+      <li>If Docker says WSL needs an update, follow its button, or see “Stuck?” below.</li>
+    </ol>
+  </div>
+  <p>Wait until the bottom-left corner of the Docker window says <strong>Engine running</strong> with a green dot.</p>
+
+  <h3>Open the command window</h3>
+  <p>A few steps ask you to paste a command. Here's how to open the window for that:</p>
+  <div data-os="mac"><span class="os-label">On a Mac</span>
+    <p>Press <span class="kbd">⌘ Command</span> + <span class="kbd">Space</span>, type <strong>Terminal</strong>, and press <span class="kbd">Return</span>. To run a command, click a <strong>Copy</strong> button on this page, click in Terminal, press <span class="kbd">⌘ Command</span> + <span class="kbd">V</span>, then press <span class="kbd">Return</span>.</p>
+  </div>
+  <div data-os="win"><span class="os-label">On Windows</span>
+    <p>Click <strong>Start</strong>, type <strong>PowerShell</strong>, and open <strong>Windows PowerShell</strong>. You don't need “Run as administrator”. To run a command, click a <strong>Copy</strong> button on this page, right-click inside PowerShell (or press <span class="kbd">Ctrl</span> + <span class="kbd">V</span>), then press <span class="kbd">Enter</span>.</p>
+  </div>
+  <p>Now check that Docker works. Paste this and run it:</p>
+  <div class="cmd"><pre><code>docker run --rm hello-world</code></pre></div>
+  <div class="check"><strong>What you should see</strong>After a few seconds, a message that includes <code>Hello from Docker!</code></div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>“command not found” or “docker is not recognized”:</strong> close the Terminal/PowerShell window, open a new one, and try again. Docker Desktop must have been opened at least once.</li>
+      <li><strong>“Cannot connect to the Docker daemon” or “error during connect”:</strong> Docker Desktop isn't running yet. Open it and wait for <strong>Engine running</strong>.</li>
+      <li data-os="win"><strong>“WSL needs updating” or “WSL 2 installation is incomplete”:</strong> open PowerShell, run <code>wsl --update</code>, and restart the PC.</li>
+      <li data-os="win"><strong>“Virtualization support not detected”:</strong> virtualization is turned off in the PC's firmware (BIOS/UEFI). Search the web for your PC model plus “enable virtualization”. The setting is usually called Intel VT-x, Intel Virtualization Technology or AMD SVM.</li>
+      <li data-os="mac"><strong>“Docker.app is damaged” or it won't open:</strong> you probably downloaded the version for the other chip. Delete it from Applications and download the other one.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s1"> I see “Hello from Docker!”</label>
+</section>
+
+<!-- ============================================================ STEP 2 -->
+<section class="card step" id="s2" aria-labelledby="s2-h">
+  <header><div><p class="kicker">Step 2 of 11</p><h2 id="s2-h">Download this project</h2></div><span class="badge">Done</span></header>
+  <p class="why">These are the files the setup helper uses. You'll put them in a folder called <code>signal-web-gate</code> in your home folder. Don't put them in a folder that syncs to iCloud, OneDrive or Dropbox: your secret keys will be stored there.</p>
+  <h3>Option A (easiest): download a ZIP</h3>
+  <ol class="do">
+    <li>Click this link to download it: <a href="https://github.com/vlsalsa/signal-web-gate/archive/refs/heads/main.zip">signal-web-gate-main.zip</a>.</li>
+    <li>Then paste this command, which unzips it into your home folder and opens the folder:</li>
+  </ol>
+  <div data-os="mac"><span class="os-label">On a Mac (Terminal)</span>
+    <div class="cmd"><pre><code>cd ~/Downloads && { [ -d signal-web-gate-main ] || unzip -q signal-web-gate-main.zip; } && mv signal-web-gate-main ~/signal-web-gate && cd ~/signal-web-gate && ls</code></pre></div>
+    <p class="note">Safari often unzips downloads by itself. The command handles that.</p>
+  </div>
+  <div data-os="win"><span class="os-label">On Windows (PowerShell)</span>
+    <div class="cmd"><pre><code>Unblock-File "$HOME\Downloads\signal-web-gate-main.zip"
+Expand-Archive "$HOME\Downloads\signal-web-gate-main.zip" -DestinationPath $HOME
+Rename-Item "$HOME\signal-web-gate-main" signal-web-gate
+cd "$HOME\signal-web-gate"
+ls</code></pre></div>
+    <p class="note"><code>Unblock-File</code> tells Windows you trust this download, so the setup helper can run later.</p>
+  </div>
+
+  <details><summary>Option B: use Git instead (makes updating easier)</summary>
+    <div data-os="mac"><span class="os-label">On a Mac</span>
+      <p>Run this. If your Mac offers to install the “command line developer tools”, click <strong>Install</strong>, wait for it to finish, then run the command again.</p>
+      <div class="cmd"><pre><code>git clone https://github.com/vlsalsa/signal-web-gate.git ~/signal-web-gate && cd ~/signal-web-gate && ls</code></pre></div>
+    </div>
+    <div data-os="win"><span class="os-label">On Windows</span>
+      <p>Install Git (accept any prompts), then close PowerShell and open a new window:</p>
+      <div class="cmd"><pre><code>winget install --id Git.Git -e</code></pre></div>
+      <p>Then download the project:</p>
+      <div class="cmd"><pre><code>git clone https://github.com/vlsalsa/signal-web-gate.git "$HOME\signal-web-gate"
+cd "$HOME\signal-web-gate"
+ls</code></pre></div>
+    </div>
+  </details>
+  <div class="check"><strong>What you should see</strong>A list of names that includes <code>docker-compose.yml</code>, <code>scripts</code>, <span data-os="mac"><code>setup.command</code></span><span data-os="win"><code>setup.bat</code></span>, and <code>README.md</code>.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>“No such file” or “cannot find path”:</strong> the ZIP isn't in your Downloads folder, or it has a different name, such as <code>signal-web-gate-main (1).zip</code>. Rename it to <code>signal-web-gate-main.zip</code> and try again.</li>
+      <li><strong>“already exists”:</strong> you've done this before. Either use the existing <code>signal-web-gate</code> folder, or rename the old one first.</li>
+      <li>Every later command assumes you're inside the folder. If you open a new window, first run <span data-os="mac"><code>cd ~/signal-web-gate</code></span><span data-os="win"><code>cd "$HOME\signal-web-gate"</code></span>.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s2"> I see docker-compose.yml in the list</label>
+</section>
+
+<!-- ============================================================ STEP 3 -->
+<section class="card step" id="s3" aria-labelledby="s3-h">
+  <header><div><p class="kicker">Step 3 of 11</p><h2 id="s3-h">Get a domain on Cloudflare</h2></div><span class="badge">Done</span></header>
+  <p class="why">Your Signal address will be a sub-address of a domain you own, like <code>signal.yourname.com</code>. Cloudflare must manage that domain.</p>
+  <ol class="do">
+    <li>Create a free Cloudflare account at <a href="https://dash.cloudflare.com/sign-up">dash.cloudflare.com/sign-up</a> and confirm your email.</li>
+    <li>Then pick one:
+      <ul class="plain">
+        <li><strong>I don't have a domain:</strong> in the Cloudflare dashboard, open <strong>Domain Registration</strong> → <strong>Register Domains</strong>, search for a name, and buy it. Cloudflare charges cost price, about $10 a year for a <code>.com</code>. It's ready in a few minutes.</li>
+        <li><strong>I already have a domain elsewhere</strong> (GoDaddy, Namecheap, Google/Squarespace…): in Cloudflare, choose <strong>Add a domain</strong> (it may say <strong>Onboard a domain</strong>), type it, and pick the <strong>Free</strong> plan. Cloudflare shows two <em>nameservers</em>. Sign in at your current domain company and replace its nameservers with those two. This can take from minutes to a day.</li>
+      </ul>
+    </li>
+  </ol>
+  <div class="warn"><strong>If the domain already runs a website or email</strong>Moving the nameservers moves all of its settings. Cloudflare tries to copy your existing records. Check that your email and website still work, or use a new, spare domain.</div>
+  <div class="check"><strong>What you should see</strong>On the Cloudflare dashboard home page, your domain is listed with the status <strong>Active</strong>.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>Still “Pending” after a day:</strong> the nameservers at your old domain company don't exactly match the two Cloudflare showed. Copy them again, and remove any extra ones.</li>
+      <li>Decide on the full address now, for example <code>signal.yourname.com</code>, and type it into the box near the top of this page.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s3"> My domain shows Active</label>
+</section>
+
+<!-- ============================================================ STEP 4 -->
+<section class="card step" id="s4" aria-labelledby="s4-h">
+  <header><div><p class="kicker">Step 4 of 11</p><h2 id="s4-h">Turn on Cloudflare Zero Trust</h2></div><span class="badge">Done</span></header>
+  <p class="why">Zero Trust is the free Cloudflare feature that emails you a sign-in code before anyone can even see your page.</p>
+  <ol class="do">
+    <li>In the Cloudflare dashboard's left menu, click <strong>Zero Trust</strong>.</li>
+    <li>The first time, it asks you to choose a <strong>team name</strong>. Pick something simple, like <code>yourname-home</code>. <strong>Write it down.</strong> Your sign-in page will be <code>yourname-home.cloudflareaccess.com</code>.</li>
+    <li>Choose the <strong>Free</strong> plan. Cloudflare may ask for a payment card even for the free plan; the free plan costs $0.</li>
+    <li>Turn on email codes: go to <strong>Integrations</strong> → <strong>Identity providers</strong> → <strong>Add new identity provider</strong> (or <strong>Add new</strong>) → <strong>One-time PIN</strong>. Save it.</li>
+  </ol>
+  <div class="check"><strong>What you should see</strong><strong>One-time PIN</strong> is listed under your identity providers, and you've written down your team name.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>Can't find a menu item:</strong> Cloudflare renames menus from time to time. Use the search box at the top of the dashboard, and type “Identity providers”.</li>
+      <li><strong>Forgot your team name:</strong> it's under Zero Trust <strong>Settings</strong> (look for <strong>Team name and domain</strong>). The part before <code>.cloudflareaccess.com</code> is the team name.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s4"> One-time PIN is on, and I have my team name</label>
+</section>
+
+<!-- ============================================================ STEP 5 -->
+<section class="card step" id="s5" aria-labelledby="s5-h">
+  <header><div><p class="kicker">Step 5 of 11</p><h2 id="s5-h">Lock the address with Cloudflare Access</h2></div><span class="badge">Done</span></header>
+  <p class="why">This tells Cloudflare: “only these email addresses may open <code class="v-host">signal.example.com</code>.” We do this <em>before</em> the address goes live, so it is never open to the public.</p>
+  <ol class="do">
+    <li>In Zero Trust, go to <strong>Access controls</strong> → <strong>Applications</strong> → <strong>Create new application</strong> (or <strong>Add an application</strong>).</li>
+    <li>Choose <strong>Self-hosted and private</strong> (older screens say <strong>Self-hosted</strong>).</li>
+    <li>Name it <code>Signal</code>.</li>
+    <li>Click <strong>Add public hostname</strong>. For <strong>Subdomain</strong> type <code>signal</code>, and for <strong>Domain</strong> pick your domain. Together they make <code class="v-host">signal.example.com</code>.</li>
+    <li>Under <strong>Access policies</strong>, choose <strong>Create new policy</strong>:
+      <ul class="plain">
+        <li>Policy name: <code>Only me</code></li>
+        <li>Action: <strong>Allow</strong></li>
+        <li>Add an <strong>Include</strong> rule. Selector: <strong>Emails</strong>. Value: your email address. Add others only if they should get in too.</li>
+      </ul>
+      Save the policy. If it opened in a new tab, go back to the application and select <strong>Only me</strong>.</li>
+    <li>Under <strong>Login methods</strong> (or <strong>Authentication</strong>), make sure <strong>One-time PIN</strong> is ticked.</li>
+    <li>Set <strong>Session duration</strong> to how often you want to enter an emailed code, for example <strong>24 hours</strong>.</li>
+    <li>Click through to the end and click <strong>Create</strong> (or <strong>Save</strong>).</li>
+  </ol>
+  <h3>Copy two things for later</h3>
+  <ol class="do">
+    <li><strong>The AUD tag.</strong> Open the new <strong>Signal</strong> application again (click its name or <strong>Edit</strong>/<strong>Configure</strong>), find <strong>Application Audience (AUD) Tag</strong> (often under <strong>Additional settings</strong> or <strong>Overview</strong>), and copy it. It's a long string of letters and numbers.</li>
+    <li><strong>Your team name</strong> from step 4.</li>
+  </ol>
+  <p>Paste them into a note for now. They aren't passwords, but there's no need to share them.</p>
+  <div class="check"><strong>What you should see</strong>A <strong>Signal</strong> application in the list for <code class="v-host">signal.example.com</code>, plus your AUD tag and team name saved in a note.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>Your domain isn't in the Domain list:</strong> it isn't Active yet (step 3), or it's in a different Cloudflare account.</li>
+      <li><strong>Only use the email addresses you trust.</strong> Don't choose “Everyone”, or a whole domain like <code>@gmail.com</code>.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s5"> I have the AUD tag and team name</label>
+</section>
+
+<!-- ============================================================ STEP 6 -->
+<section class="card step" id="s6" aria-labelledby="s6-h">
+  <header><div><p class="kicker">Step 6 of 11</p><h2 id="s6-h">Create the Cloudflare Tunnel</h2></div><span class="badge">Done</span></header>
+  <p class="why">The tunnel is how Cloudflare reaches your computer without opening anything on your home router.</p>
+  <ol class="do">
+    <li>Go to <strong>Networking</strong> → <strong>Tunnels</strong> in the main Cloudflare dashboard (inside Zero Trust it's <strong>Networks</strong> → <strong>Connectors</strong> or <strong>Tunnels</strong>). Click <strong>Create a tunnel</strong>.</li>
+    <li>If asked for a type, choose <strong>Cloudflared</strong>. Name it, for example <code>signal-home</code>, and save.</li>
+    <li>Cloudflare shows install instructions. Choose <strong>Docker</strong> as the environment. You'll see a command containing <code>--token eyJ…</code>.</li>
+    <li><strong>Copy that whole command, but don't run it.</strong> The setup helper only needs the token inside it, and it picks the token out for you. Keep it somewhere private for a few minutes.</li>
+    <li>Click <strong>Next</strong> or <strong>Continue</strong> to add a route. Choose <strong>Published application</strong> (older screens say <strong>Public hostname</strong>):
+      <ul class="plain">
+        <li>Subdomain: <code>signal</code>. Domain: your domain. Leave Path empty.</li>
+        <li>Service: type <code>http://signal-gate:8080</code>. If there are two boxes, choose <strong>HTTP</strong> as the type and type <code>signal-gate:8080</code> as the URL.</li>
+      </ul>
+      Save the route.</li>
+  </ol>
+  <div class="warn"><strong>The token is a secret</strong>Anyone with it can run your tunnel. Don't email it, post it, or put it in a chat. If it leaks, delete the tunnel in Cloudflare and make a new one.</div>
+  <div class="check"><strong>What you should see</strong>A tunnel in the list called <code>signal-home</code>, with a route for <code class="v-host">signal.example.com</code>. It's fine that it says <strong>Inactive</strong> or <strong>Down</strong>: it turns <strong>Healthy</strong> after step 7.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>It won't let me continue until the tunnel connects:</strong> do step 7 now, then come back here and add the route.</li>
+      <li><strong>“A DNS record already exists”:</strong> an old record uses the name <code>signal</code>. In your domain's <strong>DNS</strong> → <strong>Records</strong>, delete the old <code>signal</code> record, then save the route again.</li>
+      <li><strong>Lost the token:</strong> open the tunnel, click <strong>Edit</strong> or <strong>Configure</strong>, and the install command with the token is shown again.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s6"> I copied the tunnel command and added the route</label>
+</section>
+
+<!-- ============================================================ STEP 7 -->
+<section class="card step" id="s7" aria-labelledby="s7-h">
+  <header><div><p class="kicker">Step 7 of 11</p><h2 id="s7-h">Run the setup helper</h2></div><span class="badge">Done</span></header>
+  <p class="why">The helper asks a few questions, creates your secret keys, saves your password safely (only as a scrambled “hash”), and starts everything.</p>
+  <p>Make sure Docker Desktop says <strong>Engine running</strong>. Then:</p>
+  <div data-os="mac"><span class="os-label">On a Mac (Terminal)</span>
+    <div class="cmd"><pre><code>cd ~/signal-web-gate && bash scripts/setup.sh</code></pre></div>
+    <p class="note">You can also double-click <code>setup.command</code> in the folder. If macOS says it can't check the file, use the Terminal command above instead.</p>
+  </div>
+  <div data-os="win"><span class="os-label">On Windows (PowerShell)</span>
+    <div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></pre></div>
+    <p class="note">You can also double-click <code>setup.bat</code> in the folder. If a blue “Windows protected your PC” box appears, click <strong>More info</strong> → <strong>Run anyway</strong>, or use the command above.</p>
+  </div>
+  <h3>The questions it asks</h3>
+  <table>
+    <thead><tr><th scope="col">Question</th><th scope="col">What to type</th></tr></thead>
+    <tbody>
+      <tr><td>Your Signal web address</td><td><code class="v-host">signal.example.com</code> (from step 5)</td></tr>
+      <tr><td>Your Cloudflare team name</td><td>The team name from step 4, e.g. <code>yourname-home</code></td></tr>
+      <tr><td>Application Audience (AUD) tag</td><td>Paste the AUD tag from step 5</td></tr>
+      <tr><td>Email address(es) allowed in</td><td>The same email(s) as your Access policy</td></tr>
+      <tr><td>Time zone</td><td>Press <span data-os="mac"><span class="kbd">Return</span></span><span data-os="win"><span class="kbd">Enter</span></span> to accept the suggestion</td></tr>
+      <tr><td>Tunnel token</td><td>Paste the whole command from step 6. <span data-os="mac">Nothing appears while you paste; that's normal.</span><span data-os="win">Only <code>*</code> symbols appear.</span></td></tr>
+      <tr><td>New gate password (twice)</td><td>A new password, 12 characters or longer, that you don't use anywhere else. Save it in a password manager.</td></tr>
+    </tbody>
+  </table>
+  <p>Then it builds and downloads everything. The first time this takes 5 to 15 minutes and downloads about 2 GB.</p>
+  <div class="check"><strong>What you should see</strong>Green <code>OK</code> lines, including <code>Password gate is healthy</code> and <code>Cloudflare Tunnel is connected</code>, and finally <code>All set.</code> In Cloudflare, the tunnel now shows <strong>Healthy</strong>.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>Any question rejects your answer:</strong> it tells you why and asks again. Copy the value from Cloudflare again; don't include spaces.</li>
+      <li><strong>“The tunnel hasn't connected yet”:</strong> wait a minute and check the tunnel in Cloudflare. If it stays down, the token was wrong. Run the helper again, answer <strong>n</strong> to “Keep it?” for the token, and paste it again.</li>
+      <li><strong>The build failed:</strong> usually the internet dropped. Run the helper again; it picks up where it left off.</li>
+      <li><strong>Made a typo in an answer:</strong> run the helper again and answer <strong>n</strong> to “Keep these settings?”.</li>
+      <li data-os="mac"><strong>“Permission denied” on <code>setup.command</code>:</strong> use the Terminal command above; it doesn't need special permissions.</li>
+      <li data-os="win"><strong>“running scripts is disabled on this system”:</strong> use the exact command above. It includes <code>-ExecutionPolicy Bypass</code>, which allows only this one run.</li>
+      <li>Running the helper again is always safe. It keeps what's already done unless you say otherwise.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s7"> I see “All set.”</label>
+</section>
+
+<!-- ============================================================ STEP 8 -->
+<section class="card step" id="s8" aria-labelledby="s8-h">
+  <header><div><p class="kicker">Step 8 of 11</p><h2 id="s8-h">Open your Signal address</h2></div><span class="badge">Done</span></header>
+  <ol class="do">
+    <li>In any browser, go to <a class="v-host-link" href="https://signal.example.com/">https://<span class="v-host">signal.example.com</span>/</a>.</li>
+    <li>A <strong>Cloudflare</strong> sign-in page appears. Type your email and click <strong>Send me a code</strong>.</li>
+    <li>Check your email for a message from <code>noreply@notify.cloudflare.com</code>. Type the 6-digit code. It expires after 10 minutes.</li>
+    <li>Next, a dark page titled <strong>Signal</strong> asks for a password. Type the gate password from step 7.</li>
+    <li>Signal Desktop starts inside the page. The first time, this can take a minute.</li>
+  </ol>
+  <div class="check"><strong>What you should see</strong>Signal's “link your phone” screen with a big QR code.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>No code email:</strong> check spam. Cloudflare only sends it to addresses in your Access policy, but it always says a code was sent. Check the spelling of the email in step 5.</li>
+      <li><strong>“That account does not have access”:</strong> the email isn't in the Access policy, or the code was already used. Request a new code.</li>
+      <li><strong>The page doesn't load, or shows a Cloudflare error 1033 or 502:</strong> the tunnel or Docker isn't running on your computer. Open Docker Desktop and check that the three containers are running (see <a href="#daily">everyday use</a>).</li>
+      <li><strong>“Forbidden” or “Unauthorized” after the code:</strong> the email you signed in with isn't in the helper's allowed list, or the AUD tag or team name is wrong. Run the helper again and answer <strong>n</strong> to “Keep these settings?”.</li>
+      <li><strong>Wrong password too many times:</strong> the gate locks for 15 minutes after 5 wrong tries. Wait, or <a href="#password">set a new password</a>.</li>
+      <li><strong>Safari offers to save a password:</strong> that's harmless; it isn't a second login.</li>
+      <li><strong>Black screen:</strong> see <a href="#s11">step 11</a>.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s8"> I see the QR code</label>
+</section>
+
+<!-- ============================================================ STEP 9 -->
+<section class="card step" id="s9" aria-labelledby="s9-h">
+  <header><div><p class="kicker">Step 9 of 11</p><h2 id="s9-h">Link your phone</h2></div><span class="badge">Done</span></header>
+  <p class="why">This works just like linking Signal on a regular computer.</p>
+  <ol class="do">
+    <li>Open <strong>Signal</strong> on your phone.</li>
+    <li><strong>iPhone:</strong> tap your profile picture (top left) → <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link New Device</strong>.<br>
+        <strong>Android:</strong> tap your profile picture (or the ⋮ menu) → <strong>Settings</strong> → <strong>Linked devices</strong> → <strong>Link a new device</strong> (or the <strong>+</strong> button).</li>
+    <li>Point the phone's camera at the QR code in the browser.</li>
+    <li>If asked, choose whether to transfer recent message history, then give the device a name.</li>
+  </ol>
+  <div class="check"><strong>What you should see</strong>Your chats appear in the browser. New messages show up in both places.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>The QR code expired:</strong> wait for a new one to appear, or reload the page, then scan again.</li>
+      <li><strong>The phone won't scan:</strong> make the browser window bigger, or zoom in with <span data-os="mac"><span class="kbd">⌘</span> + <span class="kbd">+</span></span><span data-os="win"><span class="kbd">Ctrl</span> + <span class="kbd">+</span></span>.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s9"> My chats show in the browser</label>
+</section>
+
+<!-- ============================================================ STEP 10 -->
+<section class="card step" id="s10" aria-labelledby="s10-h">
+  <header><div><p class="kicker">Step 10 of 11</p><h2 id="s10-h">Keep it running</h2></div><span class="badge">Done</span></header>
+  <p class="why">Signal in the browser works only while this computer is on, awake, and running Docker Desktop. Docker restarts the three programs by itself.</p>
+  <ol class="do">
+    <li>In Docker Desktop, open <strong>Settings</strong> (gear icon) → <strong>General</strong>, and turn on <strong>Start Docker Desktop when you sign in to your computer</strong>. Click <strong>Apply</strong>.</li>
+    <li data-os="mac">Stop the Mac from sleeping: <strong>System Settings</strong> → <strong>Energy</strong> (on laptops: <strong>Battery</strong> → <strong>Options</strong>) → turn on <strong>Prevent automatic sleeping when the display is off</strong> (on laptops, choose the “when on power adapter” option). Keep a laptop plugged in.</li>
+    <li data-os="win">Stop the PC from sleeping: <strong>Settings</strong> → <strong>System</strong> → <strong>Power &amp; battery</strong> (Windows 10: <strong>Power &amp; sleep</strong>) → <strong>Screen and sleep</strong> → set “When plugged in, put my device to sleep after” to <strong>Never</strong>. Keep a laptop plugged in.</li>
+    <li>After a restart or an update, sign in to the computer once, so Docker Desktop can start.</li>
+  </ol>
+  <div class="check"><strong>What you should see</strong>After restarting your computer and signing in, your Signal address works again within a few minutes, without you doing anything.</div>
+  <label class="done-box"><input type="checkbox" data-step="s10"> It came back after a restart</label>
+</section>
+
+<!-- ============================================================ STEP 11 -->
+<section class="card step" id="s11" aria-labelledby="s11-h">
+  <header><div><p class="kicker">Step 11 of 11 · only if needed</p><h2 id="s11-h">Work laptops and secure browsers</h2></div><span class="badge">Done</span></header>
+  <p class="why">Some workplaces open websites through a “browser isolation” service, such as Menlo Security. Signal may flash for a moment and then go black, even though the status panel says it's working. Two settings fix it.</p>
+  <ol class="do">
+    <li>Open your address with this ending added: <a class="v-host-link" data-suffix="?offscreen_worker=false" href="https://signal.example.com/?offscreen_worker=false">https://<span class="v-host">signal.example.com</span>/?offscreen_worker=false</a>. Bookmark it.</li>
+    <li>Open the settings panel on the left edge of the Signal page (a small tab or drawer that slides out).</li>
+    <li>In its video settings, change <strong>Encoder</strong> to <strong>JPEG</strong>. The browser remembers this.</li>
+  </ol>
+  <div class="check"><strong>What you should see</strong>Signal stays visible instead of turning black.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>Still black:</strong> close every other tab with your Signal address open, then reload the bookmarked address.</li>
+      <li><strong>The JPEG setting resets:</strong> the work browser may clear its storage each day. Set it again after opening the bookmark.</li>
+      <li><strong>Your workplace blocks the site:</strong> follow your employer's rules. This guide doesn't get around work security policies.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s11"> Done, or I don't need it</label>
+</section>
+
+<!-- ============================================================ REFERENCE -->
+<section class="card" id="daily" aria-labelledby="daily-h">
+  <p class="kicker">Reference</p>
+  <h2 id="daily-h">Everyday use</h2>
+  <p>You'll rarely need these. Run them from the project folder. In a new window, go to the folder first:</p>
+  <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate</code></pre></div></div>
+  <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"</code></pre></div></div>
+  <table>
+    <thead><tr><th scope="col">To…</th><th scope="col">Run</th></tr></thead>
+    <tbody>
+      <tr><td>See if everything is running</td><td><code>docker compose ps</code><br>All three should say <strong>Up</strong>; the gate should say <strong>healthy</strong>.</td></tr>
+      <tr><td>See the tunnel's recent messages</td><td><code>docker compose logs --tail 30 signal-tunnel</code></td></tr>
+      <tr><td>See the gate's recent messages</td><td><code>docker compose logs --tail 30 signal-gate</code></td></tr>
+      <tr><td>Restart everything</td><td><code>docker compose restart</code></td></tr>
+      <tr><td>Pause it (Signal is kept)</td><td><code>docker compose stop</code></td></tr>
+      <tr><td>Start it again</td><td><code>docker compose start</code></td></tr>
+    </tbody>
+  </table>
+  <p class="note">You can also see the three containers in Docker Desktop under <strong>Containers</strong> → <strong>signal-web-gate</strong>, with start and stop buttons.</p>
+</section>
+
+<section class="card" id="password" aria-labelledby="password-h">
+  <p class="kicker">Reference</p>
+  <h2 id="password-h">Change the password</h2>
+  <p>This also signs out every browser, so use it if you think someone saw your password.</p>
+  <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && bash scripts/setup.sh password</code></pre></div></div>
+  <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -ResetPassword</code></pre></div></div>
+  <p>To change who can sign in, edit the policy in Cloudflare (step 5), then run the setup helper again, answer <strong>n</strong> to “Keep these settings?”, and enter the same emails.</p>
+</section>
+
+<section class="card" id="update" aria-labelledby="update-h">
+  <p class="kicker">Reference</p>
+  <h2 id="update-h">Keep it updated</h2>
+  <p>Check for a new version of this project every month or so. Your linked Signal stays in place.</p>
+  <h3>If you used Git (option B)</h3>
+  <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && git pull && docker compose up -d --build</code></pre></div></div>
+  <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+git pull
+docker compose up -d --build</code></pre></div></div>
+  <h3>If you used the ZIP (option A)</h3>
+  <ol class="do">
+    <li>Download the ZIP again from step 2 and unzip it. Don't overwrite your folder.</li>
+    <li>Move your <code>.env</code> file and your <code>secrets</code> folder from the old <code>signal-web-gate</code> folder into the new one. (On a Mac, press <span class="kbd">⌘</span> + <span class="kbd">Shift</span> + <span class="kbd">.</span> in Finder to show the hidden <code>.env</code> file.)</li>
+    <li>Rename the old folder to <code>signal-web-gate-old</code> and the new one to <code>signal-web-gate</code>.</li>
+    <li>Run the update:
+      <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && docker compose up -d --build</code></pre></div></div>
+      <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+docker compose up -d --build</code></pre></div></div></li>
+    <li>Once it works, delete <code>signal-web-gate-old</code>.</li>
+  </ol>
+  <p>Also keep Docker Desktop updated when it offers an update, and keep your computer's system updates on.</p>
+</section>
+
+<section class="card" id="remove" aria-labelledby="remove-h">
+  <p class="kicker">Reference</p>
+  <h2 id="remove-h">Stop or uninstall</h2>
+  <h3>Stop it for now (keeps your linked Signal)</h3>
+  <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && docker compose down</code></pre></div></div>
+  <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+docker compose down</code></pre></div></div>
+  <p>To start it again later, run the setup helper again (step 7).</p>
+  <h3>Remove it completely</h3>
+  <div class="warn"><strong>This deletes the Signal copy on this computer</strong>Your phone and other devices keep all their messages.</div>
+  <ol class="do">
+    <li>Delete the containers and the stored Signal data:
+      <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && docker compose down -v && docker image rm signal-web-gate:local</code></pre></div></div>
+      <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+docker compose down -v
+docker image rm signal-web-gate:local</code></pre></div></div></li>
+    <li>On your phone: Signal → <strong>Settings</strong> → <strong>Linked devices</strong> → tap this device → <strong>Unlink</strong>.</li>
+    <li>In Cloudflare: delete the tunnel (Networking → Tunnels) and the <strong>Signal</strong> application (Zero Trust → Access controls → Applications).</li>
+    <li>Delete the <code>signal-web-gate</code> folder.</li>
+    <li>Optional: uninstall Docker Desktop like any other app.</li>
+  </ol>
+</section>
+
+<section class="card" id="security" aria-labelledby="security-h">
+  <p class="kicker">Reference</p>
+  <h2 id="security-h">Stay safe</h2>
+  <ul class="plain">
+    <li><strong>Don't open ports on your home router.</strong> The tunnel doesn't need any, and the setup doesn't publish any ports on your computer either.</li>
+    <li><strong>Keep Cloudflare Access on.</strong> Never delete or loosen the <strong>Signal</strong> Access application while this is running. Allow only specific email addresses.</li>
+    <li><strong>Never share the <code>.env</code> file or the <code>secrets</code> folder.</strong> Don't email them, upload them, or put the folder in iCloud, OneDrive, Dropbox or a GitHub repo.</li>
+    <li><strong>Use a unique gate password</strong> that's 12 characters or longer, and store it in a password manager.</li>
+    <li><strong>Protect the computer:</strong> a login password, automatic screen lock, disk encryption, and system updates.</li>
+    <li><strong>If something seems wrong</strong> (an unknown device in Signal's linked devices, or a sign-in you didn't make): unlink the device from your phone, <a href="#password">change the password</a>, and make a new tunnel token in Cloudflare.</li>
+    <li>Signal Desktop on this computer holds your messages. Cloudflare can see the traffic between your browser and your computer, because it handles the secure connection.</li>
+  </ul>
+</section>
+
+<section class="card" id="glossary" aria-labelledby="glossary-h">
+  <p class="kicker">Reference</p>
+  <h2 id="glossary-h">Glossary</h2>
+  <dl>
+    <dt><strong>Docker / container</strong></dt><dd>An app that runs programs in sealed boxes, so they don't change the rest of your computer.</dd>
+    <dt><strong>Terminal / PowerShell</strong></dt><dd>A window where you type or paste commands. Terminal is on Macs; PowerShell is on Windows.</dd>
+    <dt><strong>Domain</strong></dt><dd>A web address you own, like <code>yourname.com</code>. <code>signal.yourname.com</code> is a sub-address of it.</dd>
+    <dt><strong>Cloudflare Access / Zero Trust</strong></dt><dd>Cloudflare's sign-in check, which emails you a code before anyone can see your page.</dd>
+    <dt><strong>Tunnel / token</strong></dt><dd>The tunnel is a private, outgoing connection from your computer to Cloudflare. The token is its secret key.</dd>
+    <dt><strong>AUD tag</strong></dt><dd>An ID Cloudflare gives your Access application. The gate checks it to make sure sign-ins are for your page.</dd>
+    <dt><strong>Gate</strong></dt><dd>The dark password page that comes after Cloudflare's sign-in.</dd>
+    <dt><strong><code>.env</code> and <code>secrets</code></strong></dt><dd>Files the setup helper creates in the project folder with your settings and keys. Keep them private.</dd>
+  </dl>
+</section>
+</main>
+
+<footer class="wrap">
+  <p>Not affiliated with Signal, Docker, LinuxServer.io or Cloudflare. Cloudflare and Docker change their menus from time to time; if a name differs, look for the closest match.</p>
+  <p>Project files and technical details: <a href="https://github.com/vlsalsa/signal-web-gate">github.com/vlsalsa/signal-web-gate</a>. Questions or problems: <a href="https://github.com/vlsalsa/signal-web-gate/issues">open an issue</a> (never paste your token, password, or <code>.env</code> there).</p>
+</footer>
+<div class="sr" aria-live="polite" id="announce"></div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  root.classList.add("js");
+  var store = {
+    get: function (k) { try { return localStorage.getItem("swg:" + k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem("swg:" + k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem("swg:" + k); } catch (e) {} }
+  };
+  var announce = document.getElementById("announce");
+  function say(msg) { announce.textContent = ""; setTimeout(function () { announce.textContent = msg; }, 30); }
+
+  // ---- Mac / Windows toggle
+  function guessOS() {
+    var p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || "";
+    return /win/i.test(p) ? "win" : "mac";
+  }
+  function setOS(os, announceIt) {
+    root.classList.remove("os-mac", "os-win");
+    root.classList.add("os-" + os);
+    document.querySelectorAll("[data-set-os]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-set-os") === os));
+    });
+    store.set("os", os);
+    if (announceIt) { say("Showing " + (os === "mac" ? "Mac" : "Windows") + " instructions"); }
+  }
+  document.querySelectorAll("[data-set-os]").forEach(function (b) {
+    b.addEventListener("click", function () { setOS(b.getAttribute("data-set-os"), true); });
+  });
+  setOS(store.get("os") || guessOS(), false);
+  // Hiding the other OS's blocks moves things, so re-apply a #step link after load.
+  if (location.hash.length > 1) {
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) { window.addEventListener("load", function () { target.scrollIntoView({ behavior: "instant", block: "start" }); }); }
+  }
+
+  // ---- Progress
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[data-step]"));
+  var total = boxes.length;
+  function refresh() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      var id = b.getAttribute("data-step");
+      var sec = document.getElementById(id);
+      var link = document.querySelector('nav.toc a[href="#' + id + '"]');
+      if (sec) { sec.classList.toggle("done", b.checked); }
+      if (link) { link.classList.toggle("done", b.checked); }
+      if (b.checked) { done++; }
+    });
+    document.getElementById("progress-text").textContent = done + " of " + total + " steps done";
+    document.getElementById("progress-fill").style.width = (100 * done / total) + "%";
+    var bar = document.querySelector('[role="progressbar"]');
+    bar.setAttribute("aria-valuenow", String(done));
+    bar.setAttribute("aria-valuemax", String(total));
+  }
+  boxes.forEach(function (b) {
+    b.checked = store.get("done:" + b.getAttribute("data-step")) === "1";
+    b.addEventListener("change", function () {
+      if (b.checked) { store.set("done:" + b.getAttribute("data-step"), "1"); } else { store.del("done:" + b.getAttribute("data-step")); }
+      refresh();
+    });
+  });
+  document.getElementById("reset-progress").addEventListener("click", function () {
+    if (!window.confirm("Clear all your ticks on this page?")) { return; }
+    boxes.forEach(function (b) { b.checked = false; store.del("done:" + b.getAttribute("data-step")); });
+    refresh(); say("Ticks cleared");
+  });
+  refresh();
+
+  // ---- Personal address
+  var hostInput = document.getElementById("host-input");
+  var hostRe = /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/;
+  function applyHost() {
+    var v = (hostInput.value || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    var host = hostRe.test(v) ? v : "signal.example.com";
+    document.querySelectorAll(".v-host").forEach(function (el) { el.textContent = host; });
+    document.querySelectorAll("a.v-host-link").forEach(function (a) {
+      a.href = "https://" + host + "/" + (a.getAttribute("data-suffix") || "");
+    });
+    if (hostRe.test(v)) { store.set("host", v); } else if (!v) { store.del("host"); }
+  }
+  hostInput.value = store.get("host") || "";
+  hostInput.addEventListener("input", applyHost);
+  applyHost();
+
+  // ---- Copy buttons
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta); return ok;
+  }
+  document.querySelectorAll(".cmd").forEach(function (box) {
+    var code = box.querySelector("code");
+    box.querySelector("pre").setAttribute("tabindex", "0");
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "copy"; btn.textContent = "Copy";
+    btn.setAttribute("aria-label", "Copy command: " + code.textContent.split("\n")[0]);
+    btn.addEventListener("click", function () {
+      var text = code.textContent;
+      function done(ok) {
+        btn.textContent = ok ? "Copied" : "Select & copy";
+        btn.classList.toggle("copied", ok);
+        say(ok ? "Copied to clipboard" : "Couldn't copy. Select the text and copy it by hand.");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 2000);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
+      } else { done(fallbackCopy(text)); }
+    });
+    box.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>

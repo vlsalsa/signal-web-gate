@@ -1,0 +1,20 @@
+# Docker Desktop (Mac / Windows) override, used by scripts/setup.sh and scripts/setup.ps1
+# through COMPOSE_FILE in .env.
+#
+# Docker Desktop runs containers in a small Linux VM, so `chown` on your Mac or PC
+# does not change what a container sees. To avoid ownership problems, the Signal profile
+# and the gate's lockout state live in Docker named volumes inside that VM instead of
+# folders next to this file. Secrets stay as files in ./secrets (inside your home folder).
+#
+# Careful: `docker compose down -v` deletes these volumes, which unlinks Signal.
+services:
+  signal-web:
+    volumes:
+      - signal-config:/config
+  signal-gate:
+    volumes:
+      - gate-state:/gate/state
+
+volumes:
+  signal-config: {}
+  gate-state: {}
