@@ -9,13 +9,13 @@
 :root{
   --ink:#1a1613; --ink-soft:#4a433c; --paper:#f4efe6; --card:#fffaf3; --line:#e3d8c8;
   --accent:#9c3b16; --accent-dark:#7a2c10; --moss:#215746; --moss-soft:#e4f0ea;
-  --warn:#7a4b00; --warn-soft:#fbefd5; --code:#2a2420; --code-ink:#f6efe6;
+  --warn:#7a4b00; --warn-soft:#fbefd5; --danger:#a01818; --danger-soft:#fbe3e1; --code:#2a2420; --code-ink:#f6efe6;
   --on-accent:#fffaf3; --radius:16px; --max:52rem; --shadow:0 8px 24px rgba(26,22,19,.07);
 }
 @media (prefers-color-scheme:dark){
   :root{ --ink:#f3ece3; --ink-soft:#cfc5b9; --paper:#161311; --card:#221e1a; --line:#3a332c;
     --accent:#f09a6e; --accent-dark:#ffb895; --moss:#8fd0b4; --moss-soft:#1c2e27;
-    --warn:#f2c46b; --warn-soft:#2e2615; --code:#0f0d0b; --code-ink:#f3ece3; --shadow:none; --on-accent:#1a1613; }
+    --warn:#f2c46b; --warn-soft:#2e2615; --danger:#ff8f86; --danger-soft:#3a1a18; --code:#0f0d0b; --code-ink:#f3ece3; --shadow:none; --on-accent:#1a1613; }
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth; scroll-padding-top:7rem}
@@ -55,6 +55,8 @@ ol.do, ul.plain{padding-left:1.4rem} ol.do li, ul.plain li{margin:.35rem 0}
 .check{background:var(--moss-soft); border-left:5px solid var(--moss); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
 .check strong:first-child, .note strong:first-child, .warn strong:first-child{display:block}
 .note{background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
+.danger{background:var(--danger-soft); border-left:5px solid var(--danger); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
+.danger strong:first-child{display:block; color:var(--danger)}
 .warn{background:var(--warn-soft); border-left:5px solid var(--warn); border-radius:10px; padding:.75rem 1rem; margin:1rem 0}
 .shot{border:2px dashed var(--line); border-radius:12px; padding:.75rem 1rem; color:var(--ink-soft); font-size:.95rem; margin:1rem 0}
 .shot::before{content:"What the screen looks like: "; font-weight:700; color:var(--ink)}
@@ -95,8 +97,8 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
       <button type="button" data-set-os="win" aria-pressed="false">Windows</button>
     </div>
     <div class="progress" aria-live="polite">
-      <span id="progress-text">0 of 11 steps done</span>
-      <span class="track" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0"><span class="fill" id="progress-fill"></span></span>
+      <span id="progress-text">0 of 12 steps done</span>
+      <span class="track" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0"><span class="fill" id="progress-fill"></span></span>
     </div>
   </div>
 </header>
@@ -109,11 +111,13 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
   <p>Pick your computer type with the <strong>Mac / Windows</strong> buttons at the top. Tick each step when it's done. Your ticks are saved in this browser only, so you can stop and come back later.</p>
 </section>
 
+<div class="warn" role="note"><strong>Status of this guide</strong>Apple-chip Macs (M1 and newer): works through emulation and may be slow. Tested on: (none yet). If you try it, please <a href="https://github.com/vlsalsa/signal-web-gate/issues">tell us how it went</a>.</div>
+
 <section class="card" aria-labelledby="before">
   <h2 id="before">Before you start</h2>
   <ul class="plain">
-    <li><strong>Time:</strong> about 1 to 2 hours the first time. Most of it is waiting for downloads.</li>
-    <li><strong>A computer that stays on:</strong> a Mac or a Windows 10/11 PC with at least 8 GB of memory and 10 GB of free space. Signal only works while this computer is on and awake.</li>
+    <li><strong>Time:</strong> set aside an unhurried afternoon. Much of it is waiting for downloads and for Cloudflare, and you can stop between steps.</li>
+    <li><strong>A computer that stays on:</strong> a Mac or a Windows 10/11 PC with at least 8 GB of memory and 10 GB of free space. Signal only works while this computer is on and awake. On Windows, Docker Desktop doesn't start until someone signs in to the PC, so after every restart someone has to sign in.</li>
     <li><strong>Your phone with Signal</strong> already set up. You'll link it at the end, like linking Signal Desktop.</li>
     <li><strong>An email address</strong> you can check. You'll get a 6-digit sign-in code there each time you sign in.</li>
     <li><strong>A web address (domain) on Cloudflare.</strong> If you don't have one, step 3 shows how to buy one (about $10 a year). Everything else is free.</li>
@@ -147,10 +151,11 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
     <li><a href="#s5">Lock the address with Cloudflare Access</a></li>
     <li><a href="#s6">Create the Cloudflare Tunnel</a></li>
     <li><a href="#s7">Run the setup helper</a></li>
-    <li><a href="#s8">Open your Signal address</a></li>
-    <li><a href="#s9">Link your phone</a></li>
-    <li><a href="#s10">Keep it running</a></li>
-    <li><a href="#s11">Work laptops and secure browsers</a></li>
+    <li><a href="#s8">Point the tunnel at the gate</a></li>
+    <li><a href="#s9">Open your Signal address</a></li>
+    <li><a href="#s10">Link your phone</a></li>
+    <li><a href="#s11">Keep it running</a></li>
+    <li><a href="#s12">Work laptops and secure browsers</a></li>
   </ol>
   <p>After that: <a href="#daily">everyday use</a>, <a href="#password">change the password</a>, <a href="#update">updates</a>, <a href="#remove">stop or uninstall</a>, <a href="#security">security</a>, <a href="#glossary">glossary</a>.</p>
   <button type="button" class="btn" id="reset-progress">Clear my ticks</button>
@@ -158,7 +163,7 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
 
 <!-- ============================================================ STEP 1 -->
 <section class="card step" id="s1" aria-labelledby="s1-h">
-  <header><div><p class="kicker">Step 1 of 11</p><h2 id="s1-h">Install Docker Desktop</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 1 of 12</p><h2 id="s1-h">Install Docker Desktop</h2></div><span class="badge">Done</span></header>
   <p class="why">Docker Desktop is the free app that runs the three programs. It's free for personal use and small businesses.</p>
 
   <div data-os="mac">
@@ -209,7 +214,7 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
 
 <!-- ============================================================ STEP 2 -->
 <section class="card step" id="s2" aria-labelledby="s2-h">
-  <header><div><p class="kicker">Step 2 of 11</p><h2 id="s2-h">Download this project</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 2 of 12</p><h2 id="s2-h">Download this project</h2></div><span class="badge">Done</span></header>
   <p class="why">These are the files the setup helper uses. You'll put them in a folder called <code>signal-web-gate</code> in your home folder. Don't put them in a folder that syncs to iCloud, OneDrive or Dropbox: your secret keys will be stored there.</p>
   <h3>Option A (easiest): download a ZIP</h3>
   <ol class="do">
@@ -217,15 +222,17 @@ footer{color:var(--ink-soft); font-size:.92rem; padding:2rem 0 3rem}
     <li>Then paste this command, which unzips it into your home folder and opens the folder:</li>
   </ol>
   <div data-os="mac"><span class="os-label">On a Mac (Terminal)</span>
-    <div class="cmd"><pre><code>cd ~/Downloads && { [ -d signal-web-gate-main ] || unzip -q signal-web-gate-main.zip; } && mv signal-web-gate-main ~/signal-web-gate && cd ~/signal-web-gate && ls</code></pre></div>
+    <div class="cmd"><pre><code>[ ! -e ~/signal-web-gate ] || { echo "signal-web-gate already exists"; false; } && cd ~/Downloads && { [ -d signal-web-gate-main ] || unzip -q signal-web-gate-main.zip; } && mv signal-web-gate-main ~/signal-web-gate && cd ~/signal-web-gate && ls</code></pre></div>
     <p class="note">Safari often unzips downloads by itself. The command handles that.</p>
   </div>
   <div data-os="win"><span class="os-label">On Windows (PowerShell)</span>
-    <div class="cmd"><pre><code>Unblock-File "$HOME\Downloads\signal-web-gate-main.zip"
-Expand-Archive "$HOME\Downloads\signal-web-gate-main.zip" -DestinationPath $HOME
-Rename-Item "$HOME\signal-web-gate-main" signal-web-gate
-cd "$HOME\signal-web-gate"
-ls</code></pre></div>
+    <div class="cmd"><pre><code>if (Test-Path "$HOME\signal-web-gate") { Write-Host "signal-web-gate already exists" -ForegroundColor Red } else {
+  Unblock-File "$HOME\Downloads\signal-web-gate-main.zip"
+  Expand-Archive "$HOME\Downloads\signal-web-gate-main.zip" -DestinationPath $HOME -Force
+  Rename-Item "$HOME\signal-web-gate-main" signal-web-gate
+  cd "$HOME\signal-web-gate"
+  ls
+}</code></pre></div>
     <p class="note"><code>Unblock-File</code> tells Windows you trust this download, so the setup helper can run later.</p>
   </div>
 
@@ -247,7 +254,7 @@ ls</code></pre></div>
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
       <li><strong>“No such file” or “cannot find path”:</strong> the ZIP isn't in your Downloads folder, or it has a different name, such as <code>signal-web-gate-main (1).zip</code>. Rename it to <code>signal-web-gate-main.zip</code> and try again.</li>
-      <li><strong>“already exists”:</strong> you've done this before. Either use the existing <code>signal-web-gate</code> folder, or rename the old one first.</li>
+      <li><strong>“signal-web-gate already exists”:</strong> you've done this before, and nothing was changed. If you've already run the setup helper there, keep that folder: it holds your settings and keys. Otherwise rename it, for example to <code>signal-web-gate-old</code>, and run the command again.</li>
       <li>Every later command assumes you're inside the folder. If you open a new window, first run <span data-os="mac"><code>cd ~/signal-web-gate</code></span><span data-os="win"><code>cd "$HOME\signal-web-gate"</code></span>.</li>
     </ul>
   </details>
@@ -256,7 +263,7 @@ ls</code></pre></div>
 
 <!-- ============================================================ STEP 3 -->
 <section class="card step" id="s3" aria-labelledby="s3-h">
-  <header><div><p class="kicker">Step 3 of 11</p><h2 id="s3-h">Get a domain on Cloudflare</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 3 of 12</p><h2 id="s3-h">Get a domain on Cloudflare</h2></div><span class="badge">Done</span></header>
   <p class="why">Your Signal address will be a sub-address of a domain you own, like <code>signal.yourname.com</code>. Cloudflare must manage that domain.</p>
   <ol class="do">
     <li>Create a free Cloudflare account at <a href="https://dash.cloudflare.com/sign-up">dash.cloudflare.com/sign-up</a> and confirm your email.</li>
@@ -280,7 +287,7 @@ ls</code></pre></div>
 
 <!-- ============================================================ STEP 4 -->
 <section class="card step" id="s4" aria-labelledby="s4-h">
-  <header><div><p class="kicker">Step 4 of 11</p><h2 id="s4-h">Turn on Cloudflare Zero Trust</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 4 of 12</p><h2 id="s4-h">Turn on Cloudflare Zero Trust</h2></div><span class="badge">Done</span></header>
   <p class="why">Zero Trust is the free Cloudflare feature that emails you a sign-in code before anyone can even see your page.</p>
   <ol class="do">
     <li>In the Cloudflare dashboard's left menu, click <strong>Zero Trust</strong>.</li>
@@ -300,7 +307,7 @@ ls</code></pre></div>
 
 <!-- ============================================================ STEP 5 -->
 <section class="card step" id="s5" aria-labelledby="s5-h">
-  <header><div><p class="kicker">Step 5 of 11</p><h2 id="s5-h">Lock the address with Cloudflare Access</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 5 of 12</p><h2 id="s5-h">Lock the address with Cloudflare Access</h2></div><span class="badge">Done</span></header>
   <p class="why">This tells Cloudflare: “only these email addresses may open <code class="v-host">signal.example.com</code>.” We do this <em>before</em> the address goes live, so it is never open to the public.</p>
   <ol class="do">
     <li>In Zero Trust, go to <strong>Access controls</strong> → <strong>Applications</strong> → <strong>Create new application</strong> (or <strong>Add an application</strong>).</li>
@@ -323,7 +330,7 @@ ls</code></pre></div>
     <li><strong>The AUD tag.</strong> Open the new <strong>Signal</strong> application again (click its name or <strong>Edit</strong>/<strong>Configure</strong>), find <strong>Application Audience (AUD) Tag</strong> (often under <strong>Additional settings</strong> or <strong>Overview</strong>), and copy it. It's a long string of letters and numbers.</li>
     <li><strong>Your team name</strong> from step 4.</li>
   </ol>
-  <p>Paste them into a note for now. They aren't passwords, but there's no need to share them.</p>
+  <p>Paste these two into a note for now (not the tunnel token, which comes next and must not be saved). They aren't passwords, but there's no need to share them.</p>
   <div class="check"><strong>What you should see</strong>A <strong>Signal</strong> application in the list for <code class="v-host">signal.example.com</code>, plus your AUD tag and team name saved in a note.</div>
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
@@ -336,35 +343,29 @@ ls</code></pre></div>
 
 <!-- ============================================================ STEP 6 -->
 <section class="card step" id="s6" aria-labelledby="s6-h">
-  <header><div><p class="kicker">Step 6 of 11</p><h2 id="s6-h">Create the Cloudflare Tunnel</h2></div><span class="badge">Done</span></header>
-  <p class="why">The tunnel is how Cloudflare reaches your computer without opening anything on your home router.</p>
+  <header><div><p class="kicker">Step 6 of 12</p><h2 id="s6-h">Create the Cloudflare Tunnel</h2></div><span class="badge">Done</span></header>
+  <p class="why">The tunnel is how Cloudflare reaches your computer without opening anything on your home router. Here you create it and find its token; the helper in step 7 uses the token, and step 8 points it at your Signal page.</p>
   <ol class="do">
-    <li>Go to <strong>Networking</strong> → <strong>Tunnels</strong> in the main Cloudflare dashboard (inside Zero Trust it's <strong>Networks</strong> → <strong>Connectors</strong> or <strong>Tunnels</strong>). Click <strong>Create a tunnel</strong>.</li>
-    <li>If asked for a type, choose <strong>Cloudflared</strong>. Name it, for example <code>signal-home</code>, and save.</li>
-    <li>Cloudflare shows install instructions. Choose <strong>Docker</strong> as the environment. You'll see a command containing <code>--token eyJ…</code>.</li>
-    <li><strong>Copy that whole command, but don't run it.</strong> The setup helper only needs the token inside it, and it picks the token out for you. Keep it somewhere private for a few minutes.</li>
-    <li>Click <strong>Next</strong> or <strong>Continue</strong> to add a route. Choose <strong>Published application</strong> (older screens say <strong>Public hostname</strong>):
-      <ul class="plain">
-        <li>Subdomain: <code>signal</code>. Domain: your domain. Leave Path empty.</li>
-        <li>Service: type <code>http://signal-gate:8080</code>. If there are two boxes, choose <strong>HTTP</strong> as the type and type <code>signal-gate:8080</code> as the URL.</li>
-      </ul>
-      Save the route.</li>
+    <li>In the main Cloudflare dashboard, go to <strong>Networking</strong> → <strong>Tunnels</strong> and click <strong>Create a tunnel</strong>.</li>
+    <li>If asked for a type, choose <strong>Cloudflared</strong>. Name it, for example <code>signal-home</code>, and click <strong>Create tunnel</strong> (or <strong>Save</strong>).</li>
+    <li>Cloudflare shows install instructions. Choose <strong>Docker</strong> as the environment. You'll see a command containing <code>--token eyJ…</code>. <strong>Don't run it.</strong> The setup helper picks the token out of it for you.</li>
+    <li><strong>Don't save the command anywhere. Leave this Cloudflare tab open and copy it again when the helper asks.</strong></li>
+    <li>Cloudflare now waits for the tunnel to connect. That happens in step 7, so leave the tab as it is and go on.</li>
   </ol>
-  <div class="warn"><strong>The token is a secret</strong>Anyone with it can run your tunnel. Don't email it, post it, or put it in a chat. If it leaks, delete the tunnel in Cloudflare and make a new one.</div>
-  <div class="check"><strong>What you should see</strong>A tunnel in the list called <code>signal-home</code>, with a route for <code class="v-host">signal.example.com</code>. It's fine that it says <strong>Inactive</strong> or <strong>Down</strong>: it turns <strong>Healthy</strong> after step 7.</div>
+  <div class="warn"><strong>The token is a secret</strong>Anyone with it can run your tunnel. Don't email it, post it, put it in a chat, or save it in a note. If it leaks, delete the tunnel in Cloudflare and make a new one.</div>
+  <div class="check"><strong>What you should see</strong>A Cloudflare tab, still open, showing the Docker install command for <code>signal-home</code>.</div>
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
-      <li><strong>It won't let me continue until the tunnel connects:</strong> do step 7 now, then come back here and add the route.</li>
-      <li><strong>“A DNS record already exists”:</strong> an old record uses the name <code>signal</code>. In your domain's <strong>DNS</strong> → <strong>Records</strong>, delete the old <code>signal</code> record, then save the route again.</li>
-      <li><strong>Lost the token:</strong> open the tunnel, click <strong>Edit</strong> or <strong>Configure</strong>, and the install command with the token is shown again.</li>
+      <li><strong>Closed the tab:</strong> go to <strong>Networking</strong> → <strong>Tunnels</strong>, click <code>signal-home</code>, and open its setup or <strong>Configure</strong>/<strong>Edit</strong> page. The install command with the token is shown again.</li>
+      <li><strong>Already ran the command by accident:</strong> stop it with <span class="kbd">Ctrl</span> + <span class="kbd">C</span> and run <code>docker ps</code>. If a <code>cloudflare/cloudflared</code> container is listed, run <code>docker rm -f</code> followed by its ID. The helper runs its own copy.</li>
     </ul>
   </details>
-  <label class="done-box"><input type="checkbox" data-step="s6"> I copied the tunnel command and added the route</label>
+  <label class="done-box"><input type="checkbox" data-step="s6"> The tunnel exists and its tab is open</label>
 </section>
 
 <!-- ============================================================ STEP 7 -->
 <section class="card step" id="s7" aria-labelledby="s7-h">
-  <header><div><p class="kicker">Step 7 of 11</p><h2 id="s7-h">Run the setup helper</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 7 of 12</p><h2 id="s7-h">Run the setup helper</h2></div><span class="badge">Done</span></header>
   <p class="why">The helper asks a few questions, creates your secret keys, saves your password safely (only as a scrambled “hash”), and starts everything.</p>
   <p>Make sure Docker Desktop says <strong>Engine running</strong>. Then:</p>
   <div data-os="mac"><span class="os-label">On a Mac (Terminal)</span>
@@ -385,12 +386,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
       <tr><td>Application Audience (AUD) tag</td><td>Paste the AUD tag from step 5</td></tr>
       <tr><td>Email address(es) allowed in</td><td>The same email(s) as your Access policy</td></tr>
       <tr><td>Time zone</td><td>Press <span data-os="mac"><span class="kbd">Return</span></span><span data-os="win"><span class="kbd">Enter</span></span> to accept the suggestion</td></tr>
-      <tr><td>Tunnel token</td><td>Paste the whole command from step 6. <span data-os="mac">Nothing appears while you paste; that's normal.</span><span data-os="win">Only <code>*</code> symbols appear.</span></td></tr>
+      <tr><td>Tunnel token</td><td>Switch to the Cloudflare tab from step 6, copy the command again, and paste it. <span data-os="mac">Nothing appears while you paste; that's normal.</span><span data-os="win">Only <code>*</code> symbols appear.</span></td></tr>
       <tr><td>New gate password (twice)</td><td>A new password, 12 characters or longer, that you don't use anywhere else. Save it in a password manager.</td></tr>
     </tbody>
   </table>
   <p>Then it builds and downloads everything. The first time this takes 5 to 15 minutes and downloads about 2 GB.</p>
-  <div class="check"><strong>What you should see</strong>Green <code>OK</code> lines, including <code>Password gate is healthy</code> and <code>Cloudflare Tunnel is connected</code>, and finally <code>All set.</code> In Cloudflare, the tunnel now shows <strong>Healthy</strong>.</div>
+  <div class="check"><strong>What you should see</strong>Green <code>OK</code> lines, including <code>Password gate is healthy</code> and <code>Cloudflare Tunnel is connected</code>, and finally <code>All set.</code> In the Cloudflare tab, the tunnel now shows as connected (or <strong>Healthy</strong>).</div>
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
       <li><strong>Any question rejects your answer:</strong> it tells you why and asks again. Copy the value from Cloudflare again; don't include spaces.</li>
@@ -407,11 +408,34 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
 
 <!-- ============================================================ STEP 8 -->
 <section class="card step" id="s8" aria-labelledby="s8-h">
-  <header><div><p class="kicker">Step 8 of 11</p><h2 id="s8-h">Open your Signal address</h2></div><span class="badge">Done</span></header>
+  <header><div><p class="kicker">Step 8 of 12</p><h2 id="s8-h">Point the tunnel at the gate</h2></div><span class="badge">Done</span></header>
+  <p class="why">This tells the tunnel that <code class="v-host">signal.example.com</code> should go to the password gate on your computer.</p>
+  <ol class="do">
+    <li>In Cloudflare, go to <strong>Networking</strong> → <strong>Tunnels</strong> → <code>signal-home</code> → the <strong>Routes</strong> tab → <strong>Add route</strong> → <strong>Published application</strong>. (If your step 6 tab now shows a <strong>Continue</strong> button, clicking it leads to the same screen.)</li>
+    <li><strong>Subdomain:</strong> <code>signal</code>. <strong>Domain:</strong> your domain. Leave <strong>Path</strong> empty.</li>
+    <li><strong>Service URL:</strong> <code>http://signal-gate:8080</code></li>
+    <li>Click <strong>Add route</strong> (or <strong>Save</strong>).</li>
+  </ol>
+  <div class="note"><strong>Already protected</strong>Cloudflare may say the app is reachable by anyone and suggest adding Access. You already did that in step 5: the <strong>Signal</strong> Access application protects this address. Don't create a second one.</div>
+  <div class="check"><strong>What you should see</strong>Under the tunnel's <strong>Routes</strong>, a route for <code class="v-host">signal.example.com</code> → <code>http://signal-gate:8080</code>, and the tunnel shows <strong>Healthy</strong>.</div>
+  <details><summary>Stuck? Common fixes</summary>
+    <ul class="plain">
+      <li><strong>“A DNS record already exists”:</strong> an old record uses the name <code>signal</code>. In your domain's <strong>DNS</strong> → <strong>Records</strong>, delete the old <code>signal</code> record, then add the route again.</li>
+      <li><strong>Older screens</strong> call this a <strong>Public hostname</strong> and have two service boxes: choose <strong>HTTP</strong> as the type and type <code>signal-gate:8080</code> as the URL.</li>
+      <li><strong>Typed something else</strong>, such as <code>localhost:8080</code>: edit the route and change it to exactly <code>http://signal-gate:8080</code>. <code>signal-gate</code> is the gate's name inside Docker.</li>
+      <li><strong>Tunnel shows Inactive or Down:</strong> Docker or the helper isn't running. See <a href="#daily">everyday use</a> to check, or run step 7 again.</li>
+    </ul>
+  </details>
+  <label class="done-box"><input type="checkbox" data-step="s8"> The route is added and the tunnel is Healthy</label>
+</section>
+
+<!-- ============================================================ STEP 9 -->
+<section class="card step" id="s9" aria-labelledby="s9-h">
+  <header><div><p class="kicker">Step 9 of 12</p><h2 id="s9-h">Open your Signal address</h2></div><span class="badge">Done</span></header>
   <ol class="do">
     <li>In any browser, go to <a class="v-host-link" href="https://signal.example.com/">https://<span class="v-host">signal.example.com</span>/</a>.</li>
     <li>A <strong>Cloudflare</strong> sign-in page appears. Type your email and click <strong>Send me a code</strong>.</li>
-    <li>Check your email for a message from <code>noreply@notify.cloudflare.com</code>. Type the 6-digit code. It expires after 10 minutes.</li>
+    <li>Check your email for a message from <code>noreply@notify.cloudflare.com</code>. Type the 6-digit code. Each code works only once and expires after 10 minutes; if it fails, ask for a new one.</li>
     <li>Next, a dark page titled <strong>Signal</strong> asks for a password. Type the gate password from step 7.</li>
     <li>Signal Desktop starts inside the page. The first time, this can take a minute.</li>
   </ol>
@@ -420,19 +444,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
     <ul class="plain">
       <li><strong>No code email:</strong> check spam. Cloudflare only sends it to addresses in your Access policy, but it always says a code was sent. Check the spelling of the email in step 5.</li>
       <li><strong>“That account does not have access”:</strong> the email isn't in the Access policy, or the code was already used. Request a new code.</li>
-      <li><strong>The page doesn't load, or shows a Cloudflare error 1033 or 502:</strong> the tunnel or Docker isn't running on your computer. Open Docker Desktop and check that the three containers are running (see <a href="#daily">everyday use</a>).</li>
+      <li><strong>The page doesn't load, or shows a Cloudflare error 1033 or 502:</strong> the route from step 8 is missing or wrong, or the tunnel or Docker isn't running on your computer. Open Docker Desktop and check that the three containers are running (see <a href="#daily">everyday use</a>).</li>
       <li><strong>“Forbidden” or “Unauthorized” after the code:</strong> the email you signed in with isn't in the helper's allowed list, or the AUD tag or team name is wrong. Run the helper again and answer <strong>n</strong> to “Keep these settings?”.</li>
-      <li><strong>Wrong password too many times:</strong> the gate locks for 15 minutes after 5 wrong tries. Wait, or <a href="#password">set a new password</a>.</li>
+      <li id="unlock"><strong>“Too many attempts. Try again later.”</strong> After 5 wrong tries in 15 minutes the gate locks for 15 minutes. After 20 wrong tries in 24 hours it stays locked until you unlock it. Changing the password does not unlock it. To unlock it now (your password stays the same):
+        <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && bash scripts/setup.sh unlock</code></pre></div></div>
+        <div data-os="win"><div class="cmd"><pre><code>cd "$HOME\signal-web-gate"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Unlock</code></pre></div></div>
+        It briefly stops the gate, saves a backup of the lock list, clears it, and starts the gate again. If you didn't make those wrong tries yourself, also <a href="#password">change the password</a>.</li>
       <li><strong>Safari offers to save a password:</strong> that's harmless; it isn't a second login.</li>
-      <li><strong>Black screen:</strong> see <a href="#s11">step 11</a>.</li>
+      <li><strong>Black screen:</strong> see <a href="#s12">step 12</a>.</li>
     </ul>
   </details>
-  <label class="done-box"><input type="checkbox" data-step="s8"> I see the QR code</label>
+  <label class="done-box"><input type="checkbox" data-step="s9"> I see the QR code</label>
 </section>
 
-<!-- ============================================================ STEP 9 -->
-<section class="card step" id="s9" aria-labelledby="s9-h">
-  <header><div><p class="kicker">Step 9 of 11</p><h2 id="s9-h">Link your phone</h2></div><span class="badge">Done</span></header>
+<!-- ============================================================ STEP 10 -->
+<section class="card step" id="s10" aria-labelledby="s10-h">
+  <header><div><p class="kicker">Step 10 of 12</p><h2 id="s10-h">Link your phone</h2></div><span class="badge">Done</span></header>
   <p class="why">This works just like linking Signal on a regular computer.</p>
   <ol class="do">
     <li>Open <strong>Signal</strong> on your phone.</li>
@@ -448,12 +476,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
       <li><strong>The phone won't scan:</strong> make the browser window bigger, or zoom in with <span data-os="mac"><span class="kbd">⌘</span> + <span class="kbd">+</span></span><span data-os="win"><span class="kbd">Ctrl</span> + <span class="kbd">+</span></span>.</li>
     </ul>
   </details>
-  <label class="done-box"><input type="checkbox" data-step="s9"> My chats show in the browser</label>
+  <label class="done-box"><input type="checkbox" data-step="s10"> My chats show in the browser</label>
 </section>
 
-<!-- ============================================================ STEP 10 -->
-<section class="card step" id="s10" aria-labelledby="s10-h">
-  <header><div><p class="kicker">Step 10 of 11</p><h2 id="s10-h">Keep it running</h2></div><span class="badge">Done</span></header>
+<!-- ============================================================ STEP 11 -->
+<section class="card step" id="s11" aria-labelledby="s11-h">
+  <header><div><p class="kicker">Step 11 of 12</p><h2 id="s11-h">Keep it running</h2></div><span class="badge">Done</span></header>
   <p class="why">Signal in the browser works only while this computer is on, awake, and running Docker Desktop. Docker restarts the three programs by itself.</p>
   <ol class="do">
     <li>In Docker Desktop, open <strong>Settings</strong> (gear icon) → <strong>General</strong>, and turn on <strong>Start Docker Desktop when you sign in to your computer</strong>. Click <strong>Apply</strong>.</li>
@@ -462,12 +490,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
     <li>After a restart or an update, sign in to the computer once, so Docker Desktop can start.</li>
   </ol>
   <div class="check"><strong>What you should see</strong>After restarting your computer and signing in, your Signal address works again within a few minutes, without you doing anything.</div>
-  <label class="done-box"><input type="checkbox" data-step="s10"> It came back after a restart</label>
+  <label class="done-box"><input type="checkbox" data-step="s11"> It came back after a restart</label>
 </section>
 
-<!-- ============================================================ STEP 11 -->
-<section class="card step" id="s11" aria-labelledby="s11-h">
-  <header><div><p class="kicker">Step 11 of 11 · only if needed</p><h2 id="s11-h">Work laptops and secure browsers</h2></div><span class="badge">Done</span></header>
+<!-- ============================================================ STEP 12 -->
+<section class="card step" id="s12" aria-labelledby="s12-h">
+  <header><div><p class="kicker">Step 12 of 12 · only if needed</p><h2 id="s12-h">Work laptops and secure browsers</h2></div><span class="badge">Done</span></header>
   <p class="why">Some workplaces open websites through a “browser isolation” service, such as Menlo Security. Signal may flash for a moment and then go black, even though the status panel says it's working. Two settings fix it.</p>
   <ol class="do">
     <li>Open your address with this ending added: <a class="v-host-link" data-suffix="?offscreen_worker=false" href="https://signal.example.com/?offscreen_worker=false">https://<span class="v-host">signal.example.com</span>/?offscreen_worker=false</a>. Bookmark it.</li>
@@ -478,11 +506,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1</code></
   <details><summary>Stuck? Common fixes</summary>
     <ul class="plain">
       <li><strong>Still black:</strong> close every other tab with your Signal address open, then reload the bookmarked address.</li>
-      <li><strong>The JPEG setting resets:</strong> the work browser may clear its storage each day. Set it again after opening the bookmark.</li>
+      <li><strong>If the Encoder setting keeps resetting</strong>, ask the owner to set JPEG as the server default. That's a one-line change described in the project's <a href="https://github.com/vlsalsa/signal-web-gate#make-jpeg-the-default-encoder">README: Make JPEG the default encoder</a>.</li>
       <li><strong>Your workplace blocks the site:</strong> follow your employer's rules. This guide doesn't get around work security policies.</li>
     </ul>
   </details>
-  <label class="done-box"><input type="checkbox" data-step="s11"> Done, or I don't need it</label>
+  <label class="done-box"><input type="checkbox" data-step="s12"> Done, or I don't need it</label>
 </section>
 
 <!-- ============================================================ REFERENCE -->
@@ -528,7 +556,7 @@ docker compose up -d --build</code></pre></div></div>
   <h3>If you used the ZIP (option A)</h3>
   <ol class="do">
     <li>Download the ZIP again from step 2 and unzip it. Don't overwrite your folder.</li>
-    <li>Move your <code>.env</code> file and your <code>secrets</code> folder from the old <code>signal-web-gate</code> folder into the new one. (On a Mac, press <span class="kbd">⌘</span> + <span class="kbd">Shift</span> + <span class="kbd">.</span> in Finder to show the hidden <code>.env</code> file.)</li>
+    <li>Move your <code>.env</code> file and your <code>secrets</code> folder from the old <code>signal-web-gate</code> folder into the new one. (On a Mac, press <span class="kbd">⌘</span> + <span class="kbd">Shift</span> + <span class="kbd">.</span> in Finder to show the hidden <code>.env</code> file.) Your linked Signal and the lock list live in Docker, not in the folder, so they carry over by themselves. This guide covers Mac and Windows only; if you set things up by hand on Linux, also move the <code>config</code> and <code>state</code> folders.</li>
     <li>Rename the old folder to <code>signal-web-gate-old</code> and the new one to <code>signal-web-gate</code>.</li>
     <li>Run the update:
       <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && docker compose up -d --build</code></pre></div></div>
@@ -536,6 +564,7 @@ docker compose up -d --build</code></pre></div></div>
 docker compose up -d --build</code></pre></div></div></li>
     <li>Once it works, delete <code>signal-web-gate-old</code>.</li>
   </ol>
+  <div class="danger" role="note"><strong>Never add <code>-v</code> when updating</strong><code>docker compose down -v</code> deletes the linked Signal profile stored in Docker. You'd have to link your phone again. Updates never need it.</div>
   <p>Also keep Docker Desktop updated when it offers an update, and keep your computer's system updates on.</p>
 </section>
 
@@ -548,7 +577,7 @@ docker compose up -d --build</code></pre></div></div></li>
 docker compose down</code></pre></div></div>
   <p>To start it again later, run the setup helper again (step 7).</p>
   <h3>Remove it completely</h3>
-  <div class="warn"><strong>This deletes the Signal copy on this computer</strong>Your phone and other devices keep all their messages.</div>
+  <div class="danger" role="note"><strong><code>docker compose down -v</code> deletes the linked Signal profile</strong>Only run it when you really want to remove everything. Signal in the browser will be gone and would need linking again. Your phone and other devices keep all their messages.</div>
   <ol class="do">
     <li>Delete the containers and the stored Signal data:
       <div data-os="mac"><div class="cmd"><pre><code>cd ~/signal-web-gate && docker compose down -v && docker image rm signal-web-gate:local</code></pre></div></div>
@@ -569,6 +598,8 @@ docker image rm signal-web-gate:local</code></pre></div></div></li>
     <li><strong>Don't open ports on your home router.</strong> The tunnel doesn't need any, and the setup doesn't publish any ports on your computer either.</li>
     <li><strong>Keep Cloudflare Access on.</strong> Never delete or loosen the <strong>Signal</strong> Access application while this is running. Allow only specific email addresses.</li>
     <li><strong>Never share the <code>.env</code> file or the <code>secrets</code> folder.</strong> Don't email them, upload them, or put the folder in iCloud, OneDrive, Dropbox or a GitHub repo.</li>
+    <li><strong>Don't save the tunnel command anywhere.</strong> Leave the Cloudflare tab open and copy it again when the helper asks. If the token was ever saved in a note, a chat or a file, rotate it: delete the tunnel in Cloudflare, create a new one (steps 6 and 8), and run the helper again with the new token.</li>
+    <li><strong>Encrypt your backups.</strong> Time Machine (Mac) and File History (Windows) back up this folder, including the secrets. Use an encrypted backup disk: tick <strong>Encrypt backup</strong> in Time Machine, or turn on BitLocker for the File History drive.</li>
     <li><strong>Use a unique gate password</strong> that's 12 characters or longer, and store it in a password manager.</li>
     <li><strong>Protect the computer:</strong> a login password, automatic screen lock, disk encryption, and system updates.</li>
     <li><strong>If something seems wrong</strong> (an unknown device in Signal's linked devices, or a sign-in you didn't make): unlink the device from your phone, <a href="#password">change the password</a>, and make a new tunnel token in Cloudflare.</li>
@@ -655,15 +686,15 @@ docker image rm signal-web-gate:local</code></pre></div></div></li>
     bar.setAttribute("aria-valuemax", String(total));
   }
   boxes.forEach(function (b) {
-    b.checked = store.get("done:" + b.getAttribute("data-step")) === "1";
+    b.checked = store.get("done2:" + b.getAttribute("data-step")) === "1";
     b.addEventListener("change", function () {
-      if (b.checked) { store.set("done:" + b.getAttribute("data-step"), "1"); } else { store.del("done:" + b.getAttribute("data-step")); }
+      if (b.checked) { store.set("done2:" + b.getAttribute("data-step"), "1"); } else { store.del("done2:" + b.getAttribute("data-step")); }
       refresh();
     });
   });
   document.getElementById("reset-progress").addEventListener("click", function () {
     if (!window.confirm("Clear all your ticks on this page?")) { return; }
-    boxes.forEach(function (b) { b.checked = false; store.del("done:" + b.getAttribute("data-step")); });
+    boxes.forEach(function (b) { b.checked = false; store.del("done2:" + b.getAttribute("data-step")); });
     refresh(); say("Ticks cleared");
   });
   refresh();

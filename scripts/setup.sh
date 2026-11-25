@@ -3,6 +3,7 @@
 #
 #   bash scripts/setup.sh            first-time setup (safe to run again)
 #   bash scripts/setup.sh password   change the gate password (signs out all browsers)
+#   bash scripts/setup.sh unlock     clear a password-page lockout (too many wrong tries)
 #
 # It asks a few questions, writes .env, creates ./secrets, builds the gate image,
 # stores your password only as an argon2id hash, and starts the stack.
@@ -102,7 +103,7 @@ configure_env() {
   chmod 600 .env
 
   local host team aud email tz
-  say "Answer with what you copied from Cloudflare (see the walkthrough, steps 3-5)."
+  say "Answer with what you copied from Cloudflare (see the walkthrough, steps 4-6)."
   while :; do
     ask host "1) Your Signal web address, e.g. signal.example.com"
     host=${host#https://}; host=${host#http://}; host=${host%%/*}; host=$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')
@@ -157,7 +158,8 @@ make_secrets() {
     ok "Created the internal Signal login"; fi
   if [[ -s secrets/tunnel_token ]] && yes_no "A tunnel token is already saved. Keep it?" y; then ok "Kept tunnel token"; else
     local tok
-    say "Paste the Cloudflare Tunnel token (or the whole install command Cloudflare shows)."
+    say "Go to the Cloudflare tab from walkthrough step 6, copy the install command again, and paste it here"
+    say "(or paste just the token)."
     say "Nothing will appear while you paste. That's normal. Press Return when done."
     while :; do
       ask_secret tok "Tunnel token"
@@ -244,10 +246,37 @@ start_stack() {
     warn "The tunnel hasn't connected yet. If this stays, check the token. Recent tunnel log:"
     compose logs --tail 10 signal-tunnel 2>&1 | sed -E 's#eyJ[A-Za-z0-9+/_=-]+#[token hidden]#g' || true
   fi
-  printf '\n%sAll set.%s Open %s in your browser.\n' "$bold" "$reset" "$(get_env GATE_ORIGIN)"
-  say "Sign in with the emailed code, enter your gate password, then scan the QR code"
-  say "with Signal on your phone (Settings > Linked devices)."
+  printf '\n%sAll set.%s\n' "$bold" "$reset"
+  say "Next, if you haven't yet: add the tunnel route in Cloudflare (walkthrough step 8)."
+  say "Then open $(get_env GATE_ORIGIN), sign in with the emailed code, enter your gate password,"
+  say "and scan the QR code with Signal on your phone (Settings > Linked devices)."
   say "The first start can take a minute or two before Signal appears."
+}
+
+unlock_gate() {
+  step "Unlocking the password page"
+  local img src stamp
+  img=$(compose config --images 2>/dev/null | grep 'linuxserver/signal' | head -1)
+  [[ -n "$img" ]] || die "Couldn't find the Signal image name. Run the full setup first."
+  docker image inspect "$img" >/dev/null 2>&1 || compose pull signal-web
+  if [[ "$desktop" == 1 ]]; then
+    src=signal-web-gate_gate-state
+    docker volume inspect "$src" >/dev/null 2>&1 || die "No gate-state volume yet. Run the full setup first."
+  else
+    src="$PWD/state"
+    [[ -d "$src" ]] || die "No ./state folder yet. Run the full setup first."
+  fi
+  stamp=$(date +%Y%m%d-%H%M%S)
+  compose stop signal-gate
+  # A throwaway container with no network edits the lockout file as the gate's user (3006).
+  docker run --rm --network none --user 3006:3006 --entrypoint /bin/sh \
+    -v "$src:/state" "$img" -c '
+      set -e
+      if [ -s /state/lockout.json ]; then cp /state/lockout.json "/state/lockout.json.bak-$1"; echo "  Backed up the old lock list as lockout.json.bak-$1"; fi
+      printf "{}" > /state/lockout.json.tmp && mv /state/lockout.json.tmp /state/lockout.json
+    ' unlock "$stamp" || { compose start signal-gate; die "Couldn't clear the lock list."; }
+  compose start signal-gate
+  ok "Unlocked. You can sign in again (your password is unchanged)."
 }
 
 desktop=0
@@ -264,7 +293,13 @@ main() {
     ok "Password changed. Every browser is signed out and needs the new password."
     exit 0
   fi
-  [[ -z "${1:-}" ]] || die "Unknown option '$1'. Use no option, or 'password'."
+  if [[ "${1:-}" == unlock ]]; then
+    check_docker
+    [[ -f .env ]] || die "Run the full setup first: bash scripts/setup.sh"
+    unlock_gate
+    exit 0
+  fi
+  [[ -z "${1:-}" ]] || die "Unknown option '$1'. Use no option, 'password' or 'unlock'."
   say "${bold}Signal web gate setup${reset}  (press Ctrl+C at any time to stop; it's safe to rerun)"
   check_docker
   configure_env

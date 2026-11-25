@@ -97,7 +97,8 @@ It checks Docker, asks for your hostname, team name, AUD tag and allowed emails,
 pasted as the whole install command Cloudflare shows), builds the gate, hashes your password
 with argon2id, starts the stack and waits for the gate's health check. It is safe to re-run.
 `bash scripts/setup.sh password` / `setup.ps1 -ResetPassword` changes the password and
-rotates the session key, which signs out every browser.
+rotates the session key, which signs out every browser. `bash scripts/setup.sh unlock` /
+`setup.ps1 -Unlock` clears a login lockout.
 
 On Docker Desktop the helper sets `COMPOSE_FILE` in `.env` to add
 [`compose.desktop.yml`](compose.desktop.yml). Docker Desktop runs containers in a VM, where
@@ -171,6 +172,36 @@ Every gate flag can also be set with a `GATE_*` environment variable. For exampl
 | `-verify-stdin FILE` | Check a password on stdin against a hash file |
 | `-healthcheck` | Probe the local health endpoint (used by Compose) |
 
+## Make JPEG the default encoder
+
+Browser-isolation services such as Menlo Security can't show the default H.264 stream: Signal
+flashes and then goes black. Each user can fix it by opening `https://signal.example.com/?offscreen_worker=false`
+and choosing **Encoder → JPEG** in the left sidebar, but some isolated browsers forget that choice.
+
+To make JPEG the server-side default, add [`compose.jpeg.yml`](compose.jpeg.yml), which sets
+(Selkies list syntax: the first item is the default, the rest stay selectable; a single
+`jpeg` would hide the menu):
+
+```yaml
+SELKIES_ENCODER: "jpeg,h264enc,h265enc,vp8enc,vp9enc,av1enc"
+```
+
+Append it to `COMPOSE_FILE` in `.env`, using `:` on macOS/Linux and `;` on Windows:
+
+```bash
+# macOS / Linux (Docker Desktop)
+COMPOSE_FILE=docker-compose.yml:compose.desktop.yml:compose.jpeg.yml
+# Windows
+COMPOSE_FILE=docker-compose.yml;compose.desktop.yml;compose.jpeg.yml
+# Native Linux without the desktop override
+COMPOSE_FILE=docker-compose.yml:compose.jpeg.yml
+```
+
+Then run `docker compose up -d`. This recreates `signal-web`, but your linked profile is kept.
+A browser that already saved its own encoder choice may keep it. See LinuxServer's
+[Selkies configuration reference](https://docs.linuxserver.io/selkies/user-guide/configuration/)
+for the full syntax.
+
 ## Security model
 
 - **Access JWT verification.**
@@ -186,7 +217,9 @@ Every gate flag can also be set with a `GATE_*` environment variable. For exampl
   - Checks are serialized, and each failure adds a fixed delay.
 - **Lockout.**
   - 5 failures in 15 minutes locks login for 15 minutes.
-  - 20 failures in 24 hours is a hard lock.
+  - 20 failures in 24 hours is a hard lock that stays until cleared: `bash scripts/setup.sh unlock`
+    (or `setup.ps1 -Unlock`) backs up `lockout.json`, empties it and restarts the gate.
+    Changing the password does not clear it.
   - State persists in `state/`, so a restart doesn't reset it.
 - **Sessions.**
   - An HMAC-signed, `HttpOnly`, `Secure`, `__Host-` cookie, bound to the Access email,

@@ -9,9 +9,10 @@
   Easiest: double-click setup.bat in the main folder. Or, in PowerShell:
     powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
     powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -ResetPassword
+    powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Unlock
 #>
 [CmdletBinding()]
-param([switch]$ResetPassword)
+param([switch]$ResetPassword, [switch]$Unlock)
 
 # Native tools (docker) write progress to stderr; don't let that abort the script.
 $ErrorActionPreference = 'Continue'
@@ -134,7 +135,7 @@ function Set-Settings {
     $example = [IO.File]::ReadAllText((Join-Path $Root '.env.example')).Replace("`r`n", "`n")
     [IO.File]::WriteAllText((Join-Path $Root '.env'), $example, $Utf8NoBom)
   }
-  Say 'Answer with what you copied from Cloudflare (see the walkthrough, steps 3-5).'
+  Say 'Answer with what you copied from Cloudflare (see the walkthrough, steps 4-6).'
   while ($true) {
     $hostName = (Ask '1) Your Signal web address, e.g. signal.example.com').ToLowerInvariant()
     $hostName = $hostName -replace '^https?://', '' -replace '/.*$', ''
@@ -174,7 +175,8 @@ function New-Secrets {
   if ((Test-Path secrets\session_key) -and (Get-Item secrets\session_key).Length -gt 0) { Ok 'Session key already exists' }
   else { Write-Secret 'session_key' (Random-Bytes 32); Ok 'Created a session key' }
 
-  if ((Test-Path secrets\upstream_password) -and (Test-Path secrets\upstream_basic)) { Ok 'Internal Signal login already exists' }
+  if ((Test-Path secrets\upstream_password) -and (Test-Path secrets\upstream_basic) -and`
+      (Get-Item secrets\upstream_password).Length -gt 0 -and (Get-Item secrets\upstream_basic).Length -gt 0) { Ok 'Internal Signal login already exists' }
   else {
     $user = Get-EnvValue 'UPSTREAM_USER'; if (-not $user) { $user = 'signal' }
     $pw = ((Random-Bytes 32) | ForEach-Object { $_.ToString('x2') }) -join ''
@@ -184,8 +186,9 @@ function New-Secrets {
     Ok 'Created the internal Signal login'
   }
 
-  if ((Test-Path secrets\tunnel_token) -and (Yes-No 'A tunnel token is already saved. Keep it?' 'y')) { Ok 'Kept tunnel token'; return }
-  Say 'Paste the Cloudflare Tunnel token (or the whole install command Cloudflare shows).'
+  if ((Test-Path secrets\tunnel_token) -and (Get-Item secrets\tunnel_token).Length -gt 0 -and (Yes-No 'A tunnel token is already saved. Keep it?' 'y')) { Ok 'Kept tunnel token'; return }
+  Say 'Go to the Cloudflare tab from walkthrough step 6, copy the install command again, and paste it here'
+  Say '(or paste just the token).'
   Say "Paste with a right-click or Ctrl+V. Only * symbols will show. Press Enter when done."
   while ($true) {
     $raw = Ask-Secret 'Tunnel token'
@@ -227,7 +230,7 @@ function Get-Hash([string]$password) {
 
 function Set-Password([bool]$force) {
   Step '5/6  Your gate password'
-  if ((Test-Path secrets\gate_password.argon2) -and -not $force) {
+  if ((Test-Path secrets\gate_password.argon2) -and (Get-Item secrets\gate_password.argon2).Length -gt 0 -and -not $force) {
     Ok 'A password is already set (to change it, run setup with -ResetPassword)'; return
   }
   $null = & docker image inspect signal-web-gate:local 2>$null
@@ -269,14 +272,41 @@ function Start-Stack {
     (& docker compose logs --tail 10 signal-tunnel 2>$null) | ForEach-Object { $_ -replace 'eyJ[A-Za-z0-9+/_=-]+', '[token hidden]' }
   }
   Write-Host ''
-  Write-Host ("All set. Open {0} in your browser." -f (Get-EnvValue 'GATE_ORIGIN')) -ForegroundColor Green
-  Say 'Sign in with the emailed code, enter your gate password, then scan the QR code'
-  Say 'with Signal on your phone (Settings > Linked devices).'
+  Write-Host 'All set.' -ForegroundColor Green
+  Say "Next, if you haven't yet: add the tunnel route in Cloudflare (walkthrough step 8)."
+  Say ("Then open {0}, sign in with the emailed code, enter your gate password," -f (Get-EnvValue 'GATE_ORIGIN'))
+  Say 'and scan the QR code with Signal on your phone (Settings > Linked devices).'
   Say 'The first start can take a minute or two before Signal appears.'
+}
+
+function Unlock-Gate {
+  Step 'Unlocking the password page'
+  $img = (& docker compose config --images 2>$null | Where-Object { $_ -match 'linuxserver/signal' } | Select-Object -First 1)
+  if (-not $img) { Stop-Setup "Couldn't find the Signal image name. Run the full setup first." }
+  $null = & docker image inspect $img 2>$null
+  if ($LASTEXITCODE -ne 0) { & docker compose pull signal-web }
+  $vol = 'signal-web-gate_gate-state'
+  $null = & docker volume inspect $vol 2>$null
+  if ($LASTEXITCODE -ne 0) { Stop-Setup 'No gate-state volume yet. Run the full setup first.' }
+  $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+  & docker compose stop signal-gate
+  # A throwaway container with no network edits the lockout file as the gate's user (3006).
+  # No double quotes inside: Windows PowerShell 5.1 doesn't escape them for native commands.
+  $sh = 'set -e; if [ -s /state/lockout.json ]; then cp /state/lockout.json /state/lockout.json.bak-$1; echo Backed up the old lock list as lockout.json.bak-$1; fi; printf {} > /state/lockout.json.tmp; mv /state/lockout.json.tmp /state/lockout.json'
+  & docker run --rm --network none --user 3006:3006 --entrypoint /bin/sh -v "${vol}:/state" $img -c $sh unlock $stamp
+  $rc = $LASTEXITCODE
+  & docker compose start signal-gate
+  if ($rc -ne 0) { Stop-Setup "Couldn't clear the lock list." }
+  Ok 'Unlocked. You can sign in again (your password is unchanged).'
 }
 
 Write-Host 'Signal web gate setup  (press Ctrl+C at any time to stop; it is safe to run again)' -ForegroundColor Cyan
 Test-Docker
+if ($Unlock) {
+  if (-not (Test-Path .env)) { Stop-Setup 'Run the full setup first.' }
+  Unlock-Gate
+  exit 0
+}
 if ($ResetPassword) {
   if (-not (Test-Path .env)) { Stop-Setup 'Run the full setup first.' }
   Set-Password $true

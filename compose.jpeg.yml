@@ -1,0 +1,7 @@
+# Optional: make JPEG the default video encoder for every browser, for secure/isolating
+# browsers (e.g. Menlo Security) that show a black screen with H.264. See the README section
+# "Make JPEG the default encoder". The first item is the default; the rest stay selectable.
+services:
+  signal-web:
+    environment:
+      SELKIES_ENCODER: "jpeg,h264enc,h265enc,vp8enc,vp9enc,av1enc"
