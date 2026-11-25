@@ -1,0 +1,9 @@
+secrets/
+.env
+.env.*
+!.env.example
+*.argon2
+bin/
+state/
+config/
+*.tar.gz

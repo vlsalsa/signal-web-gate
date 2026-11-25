@@ -1,0 +1,116 @@
+name: signal-web-gate
+services:
+  signal-web:
+    image: lscr.io/linuxserver/signal:version-8.36.0@sha256:fcb344dd24297c5fc63f6a7e9ecde066e8cfa6cfe6cd31dcb96ff96edb574392
+    environment:
+      PUID: ${PUID:-3005}
+      PGID: ${PGID:-3005}
+      TZ: ${TZ:-Etc/UTC}
+      CUSTOM_USER: ${UPSTREAM_USER:-signal}
+      FILE__PASSWORD: /run/secrets/upstream_password
+      AUTO_GPU: "false"
+      HARDEN_DESKTOP: "true"
+      HARDEN_OPENBOX: "true"
+      DISABLE_SUDO: "true"
+      DISABLE_TERMINALS: "true"
+      SELKIES_ENABLE_SHARING: "false"
+      SELKIES_ENABLE_SHARED: "false"
+      SELKIES_FILE_TRANSFERS: none
+      SELKIES_MICROPHONE_ENABLED: "false|locked"
+      SELKIES_WEBCAM_ENABLED: "false|locked"
+      SELKIES_UI_SIDEBAR_SHOW_SHARING: "false|locked"
+      SELKIES_UI_SIDEBAR_SHOW_FILES: "false|locked"
+      SELKIES_UI_SIDEBAR_SHOW_WEBCAM: "false|locked"
+      SELKIES_FRAMERATE: "20"
+    volumes:
+      - ./config:/config
+    secrets:
+      - upstream_password
+    networks:
+      - signal-app
+    shm_size: 512m
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 1.0
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  signal-gate:
+    build: ./gate
+    image: signal-web-gate:local
+    user: "3006:3006"
+    environment:
+      GATE_LISTEN: :8080
+      GATE_UPSTREAM: ${GATE_UPSTREAM:-http://signal-web:3000}
+      GATE_TEAM: ${GATE_TEAM:?Set GATE_TEAM}
+      GATE_AUD: ${GATE_AUD:?Set GATE_AUD}
+      GATE_ALLOWED_EMAIL: ${GATE_ALLOWED_EMAIL:?Set GATE_ALLOWED_EMAIL}
+      GATE_ORIGIN: ${GATE_ORIGIN:?Set GATE_ORIGIN}
+      GATE_PASSWORD_FILE: /run/secrets/gate_password
+      GATE_SESSION_KEY_FILE: /run/secrets/session_key
+      GATE_UPSTREAM_BASIC_FILE: /run/secrets/upstream_basic
+      GATE_STATE_DIR: /gate/state
+      GATE_SESSION_TTL: 12h
+      GATE_COOKIE_SAMESITE: lax
+      GATE_ARGON2_CONCURRENCY: "1"
+    secrets:
+      - gate_password
+      - session_key
+      - upstream_basic
+    volumes:
+      - ./state:/gate/state
+    networks:
+      - signal-app
+      - signal-edge
+    read_only: true
+    cap_drop: [ALL]
+    depends_on:
+      - signal-web
+    healthcheck:
+      test: [CMD, /gate/signal-gate, -healthcheck]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: 0.25
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  signal-tunnel:
+    image: cloudflare/cloudflared:2026.11.2@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2
+    # Runs as the image's nonroot user (65532), separate from the gate's uid.
+    command: [tunnel, --no-autoupdate, run, --token-file, /run/secrets/tunnel_token]
+    secrets:
+      - tunnel_token
+    depends_on:
+      - signal-gate
+    networks:
+      - signal-edge
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.25
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+# These are not internal:true: Signal needs outbound connectivity to link/sync,
+# the gate needs Access public keys over HTTPS, and the tunnel needs its edge.
+# There are intentionally NO published host ports.
+networks:
+  signal-app: {}
+  signal-edge: {}
+
+secrets:
+  gate_password:
+    file: ./secrets/gate_password.argon2
+  session_key:
+    file: ./secrets/session_key
+  upstream_basic:
+    file: ./secrets/upstream_basic
+  upstream_password:
+    file: ./secrets/upstream_password
+  tunnel_token:
+    file: ./secrets/tunnel_token
